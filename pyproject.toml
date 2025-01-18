@@ -1,0 +1,98 @@
+[build-system]
+requires = ["setuptools>=68", "setuptools_scm[toml]>=8"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "biu_python_final_project"
+requires-python = ">=3.13"
+version = "1.0"
+dependencies = [
+    # Add runtime dependencies here
+]
+readme = "README.md"
+keywords = ["neuroscience", "rdm", "clip", "cnn", "pytorch", "tensorflow"]
+
+[project.optional-dependencies]
+dev = [
+    "tox",
+    "ipykernel",
+    "biu_python_final_project[ds]",
+    "biu_python_final_project[lint]",
+    "biu_python_final_project[test]",
+    "biu_python_final_project[doc]",
+    "biu_python_final_project[build]",
+]
+ds = [
+    numpy = "*"
+    pandas = "*"
+    torch = "*"
+    torchvision = "*"
+    torchaudio = "*"
+    tensorflow = "*"
+    transformers = "*"
+    scikit-learn = "*"
+    scipy = "*"
+    tqdm = "*"
+    matplotlib = "*"
+    seaborn = "*"
+    Pillow = "*"
+]
+lint = [
+    "mypy",
+    "ruff",
+]
+
+build = [
+    "build>=1.2.2",
+]
+
+[tool.ruff]
+line-length = 120
+src = ["src"]
+extend-exclude = [
+    "conf.py",
+]
+target-version = "py313"
+lint.select = ["ALL"]
+lint.ignore = [
+    "COM812",   # Conflicts with the formatter
+    "ISC001",   # Conflicts with the formatter
+    "PT001",    # https://github.com/astral-sh/ruff/issues/8796#issuecomment-1825907715
+    "PT023",    # https://github.com/astral-sh/ruff/issues/8796#issuecomment-1825907715
+    "D415",     # Docstring can end without ./!
+    "D416",     # Docstring Return can end without :
+    "T201", # print statements
+    "N802", # need to use provided func names which are camelCase
+    "ANN001", # skip type annotation
+    "UP031", # remove string format to allow for regex
+    "PD901", # be able to use 'df' name
+    "ANN201", # ignore return types
+    "E501", # ignore line too long
+    "D103", # ignore docstrings
+    "PLR2004", # ignore magic number
+]
+
+[tool.ruff.lint.per-file-ignores]
+"**/tests/**" = [
+    "S101", # Use of `assert` detected
+    "D103", # Missing docstring in public function
+]
+
+[tool.ruff.lint.pyupgrade]
+# Preserve types, even if a file imports `from __future__ import annotations`(https://github.com/astral-sh/ruff/issues/5434)
+keep-runtime-typing = true
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.mypy]
+disallow_untyped_defs = true # Functions need to be annotated
+warn_unused_ignores = true
+ignore_missing_imports = true
+exclude = [
+    "biu_python_final_project-\\d+", # Ignore temporary folder created by setuptools when building an sdist
+    "venv.*/",
+    "build/",
+    "dist/",
+]
+
