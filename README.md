@@ -6,25 +6,26 @@ BIU python class final project
 <summary>Directory Structure</summary>
 
 ```bash
-my_project/
-  ├── config/
-  │   ├── __init__.py
-  │   ├── config.py
-  │   └── clip_config.py
-  ├── models/
-  │   ├── __init__.py
-  │   ├── models.py
-  │   └── pytorch_models.py
-  ├── utils/
-  │   ├── __init__.py
-  │   ├── data_utils.py
-  │   ├── clip_utils.py
-  │   ├── pytorch_data.py
-  │   ├── pytorch_training.py
-  │   └── visualizations.py
-  ├── main.py
-  ├── clip_main.py
-  └── pyproject.toml
+biu_python_final_project/
+  ├── src/
+  │   ├── project/
+  │   │   ├── config/
+  │   │   │   ├── __init__.py
+  │   │   │   ├── clip_config.py
+  │   │   │   └── config.py
+  │   │   ├── models/
+  │   │   │   ├── __init__.py
+  │   │   │   ├── models.py
+  │   │   │   └── pytorch_models.py
+  │   │   ├── utils/
+  │   │   │   ├── __init__.py
+  │   │   │   ├── clip_utils.py
+  │   │   │   ├── data_utils.py
+  │   │   │   ├── pytorch_data.py
+  │   │   │   ├── pytorch_training.py
+  │   │   │   └── visualizations.py
+  │   │   ├── main.py
+  │   │   └── clip_main.py
 ```
 </details>
 
