@@ -3,8 +3,8 @@ requires = ["setuptools>=68", "setuptools_scm[toml]>=8"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "biu_python_final_project"
-requires-python = ">=3.13"
+name = "project"
+requires-python = ">=3.7,<4.0"
 version = "1.0"
 dependencies = [
     # Add runtime dependencies here
@@ -16,26 +16,24 @@ keywords = ["neuroscience", "rdm", "clip", "cnn", "pytorch", "tensorflow"]
 dev = [
     "tox",
     "ipykernel",
-    "biu_python_final_project[ds]",
-    "biu_python_final_project[lint]",
-    "biu_python_final_project[test]",
-    "biu_python_final_project[doc]",
-    "biu_python_final_project[build]",
+    "project[ds]",
+    "project[lint]",
+    "project[build]",
 ]
 ds = [
-    numpy = "*"
-    pandas = "*"
-    torch = "*"
-    torchvision = "*"
-    torchaudio = "*"
-    tensorflow = "*"
-    transformers = "*"
-    scikit-learn = "*"
-    scipy = "*"
-    tqdm = "*"
-    matplotlib = "*"
-    seaborn = "*"
-    Pillow = "*"
+    "numpy==1.26.4",
+    "pandas==2.2.2",
+    "torch==2.5.1",
+    "torchvision",
+    "torchaudio",
+    "tensorflow",
+    "transformers",
+    "scikit-learn",
+    "scipy==1.13.1",
+    "tqdm==4.67.1",
+    "matplotlib==3.10.0",
+    "seaborn==0.13.2",
+    "Pillow"
 ]
 lint = [
     "mypy",
@@ -46,13 +44,19 @@ build = [
     "build>=1.2.2",
 ]
 
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
 [tool.ruff]
 line-length = 120
 src = ["src"]
 extend-exclude = [
     "conf.py",
 ]
-target-version = "py313"
+target-version = "py311"
 lint.select = ["ALL"]
 lint.ignore = [
     "COM812",   # Conflicts with the formatter
@@ -90,7 +94,7 @@ disallow_untyped_defs = true # Functions need to be annotated
 warn_unused_ignores = true
 ignore_missing_imports = true
 exclude = [
-    "biu_python_final_project-\\d+", # Ignore temporary folder created by setuptools when building an sdist
+    "project-\\d+", # Ignore temporary folder created by setuptools when building an sdist
     "venv.*/",
     "build/",
     "dist/",

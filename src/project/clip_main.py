@@ -4,13 +4,13 @@ import os
 import torch
 import numpy as np
 
-from config import clip_config
-from utils.data_utils import prepare_fmri_data, create_rdm
-from utils.clip_utils import load_clip_model, get_image_embeddings
-from utils.pytorch_data import generate_pair_indices, train_test_split_pairs, PairDataset
-from models.pytorch_models import NeuralNetwork, DynamicLayerSizeNeuralNetwork
-from utils.pytorch_training import train_model, reconstruct_predicted_rdm
-from utils.visualizations import (
+from .config import clip_config
+from .utils.data_utils import prepare_fmri_data, create_rdm
+from .utils.clip_utils import load_clip_model, get_image_embeddings
+from .utils.pytorch_data import generate_pair_indices, train_test_split_pairs, PairDataset
+from .models.pytorch_models import NeuralNetwork, DynamicLayerSizeNeuralNetwork
+from .utils.pytorch_training import train_model, reconstruct_predicted_rdm
+from .utils.visualizations import (
     plot_rdm_submatrix,
     plot_rdm_distribution,
     plot_rdms,

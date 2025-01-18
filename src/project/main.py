@@ -8,15 +8,15 @@ from scipy.stats import spearmanr, pearsonr
 from sklearn.metrics import r2_score
 
 # Local imports
-from config import config
-from utils.data_utils import (
+from .config import config
+from .utils.data_utils import (
     prepare_fmri_data,
     preprocess_images,
     create_rdm,
     create_rdm_from_vectors,
 )
-from models.models import create_cnn_model, correlation_loss_with_mse
-from utils.visualizations import (
+from .models.models import create_cnn_model, correlation_loss_with_mse
+from .utils.visualizations import (
     plot_rdm_submatrix,
     plot_rdm_distribution,
     plot_rdms,

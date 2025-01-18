@@ -30,7 +30,7 @@ my_project/
 
 ## On first run:
 ```bash 
-#install Virtualenv is - a tool to set up your Python environments
+#install Virtualenv - a tool to set up your Python environments
 pip install virtualenv
 #create virtual environment (serve only this project):
 python3 -m venv venv
