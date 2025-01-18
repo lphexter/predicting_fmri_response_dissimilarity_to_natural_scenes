@@ -25,7 +25,8 @@ my_project/
   ├── main.py
   ├── clip_main.py
   └── pyproject.toml
-</details> ``` </details>
+```
+</details>
 
 ## On first run:
 ```bash 
