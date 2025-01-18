@@ -8,6 +8,7 @@ Functions:
     main(): The main function that starts the application.
 """
 
+import argparse
 import os
 
 import torch
@@ -30,6 +31,13 @@ from .utils.visualizations import (
 
 
 def main():
+    # Parse command-line arguments
+    parser = argparse.ArgumentParser(description="CLIP + PyTorch Pipeline for RDM Modeling")
+    parser.add_argument(
+        "--root_dir", type=str, default=clip_config.ROOT_DATA_DIR, help="Path to the root data directory"
+    )
+    args = parser.parse_args()
+
     #######################
     #   LOAD / PREP FMRI
     #######################
@@ -38,7 +46,7 @@ def main():
         desired_image_number=clip_config.DESIRED_IMAGE_NUMBER,
         roi=clip_config.ROI,
         region_class=clip_config.REGION_CLASS,
-        root_data_dir=clip_config.ROOT_DATA_DIR,
+        root_data_dir=f"{args.root_dir}/{clip_config.ROOT_DATA_DIR}",
     )
     rdm = create_rdm(fmri_data, metric=clip_config.METRIC)
 
@@ -113,9 +121,8 @@ def main():
     #   LAYER SWEEP
     #######################
     if clip_config.SWEEP_LAYERS:
-        layers_list = [0, 1, 2, 3]
         accuracy_list = []
-        for layer_num in layers_list:
+        for layer_num in clip_config.LAYERS_LIST:
             sweep_model = DynamicLayerSizeNeuralNetwork(
                 hidden_layers=layer_num, activation_func=clip_config.ACTIVATION_FUNC
             ).to(device)
@@ -137,7 +144,7 @@ def main():
             save_path = f"dynamic_model_{layer_num}_layers.pth"
             torch.save(sweep_model.state_dict(), save_path)
 
-        plot_accuracy_vs_layers(layers_list, accuracy_list, metric=clip_config.ACCURACY)
+        plot_accuracy_vs_layers(clip_config.LAYERS_LIST, accuracy_list, metric=clip_config.ACCURACY)
 
 
 if __name__ == "__main__":

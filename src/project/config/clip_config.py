@@ -28,3 +28,4 @@ HIDDEN_LAYERS = 1
 # OTHER
 #############################################
 SWEEP_LAYERS = True  # Whether to sweep over hidden layer sizes
+LAYERS_LIST = [0, 1, 2, 3]  # Sweep over these numbers of hidden layers

@@ -31,18 +31,39 @@ biu_python_final_project/
 
 ## On first run:
 ```bash 
-#install Virtualenv - a tool to set up your Python environments
+# install Virtualenv - a tool to set up your Python environments
 pip install virtualenv
-#create virtual environment (serve only this project):
-python3 -m venv venv
-#activate virtual environment
+# create virtual environment (serve only this project):
+python3.10 -m venv venv
+# activate virtual environment
 source venv/bin/activate
 + (venv) should appear as prefix to all command (run next command just after activating venv)
-#update venv's python package-installer (pip) to its latest version
+# update venv's python package-installer (pip) to its latest version
 pip install --upgrade pip
-#install projects packages
-pip install -e .[dev]     
+# install projects packages
+pip install -e .[dev]
 ``` 
+
+### Setup your data folder
+1. Download Google Drive for Desktop
+2. Ensure you have added a Shortcut to the algonauts data folder ("algonauts_2023_tutorial_data") to your Drive
+3. Copy the full Shorcut path for use later, e.g. ~/Library/CloudStorage/GoogleDrive-<your_email>/.shortcut-targets-by-id/<shortcut_id>
+
+## Running the Models
+
+### Configuration files:
+1. config.py --> user configurations for the first model
+2. clip_config.py --> user configurations for the second model; NOTE: "SWEEP" to True means that you will loop over the layers in "LAYERS_LIST" (rather than just the one test layer)
+
+### First model (Siamese CNN)
+```bash 
+python3.10 -m src.project.main --root_dir "/absolute/path/to/Google/Drive/Shortcut"
+```
+
+### Second model (simple MLP)
+```bash 
+python3.10 -m src.project.clip_main --root_dir "/absolute/path/to/Google/Drive/Shortcut"
+```
 
 ## Modify package dependencies (add/remove/update external modules/packages):
 #### Add new module:
@@ -50,7 +71,7 @@ pip install -e .[dev]
 2. Run:
 ```bash 
 pip install -e .[dev]
-``` 
+```
 
 #### Remove new module:
 1. Remove the package from pyproject.toml

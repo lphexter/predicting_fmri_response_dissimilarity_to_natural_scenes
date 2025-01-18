@@ -1,5 +1,6 @@
 # main.py
 
+import argparse
 import os
 
 import numpy as np
@@ -62,6 +63,11 @@ def data_generator(image_data, pair_indices, y_data, batch_size=32):
 
 
 def main():
+    # Parse command-line arguments
+    parser = argparse.ArgumentParser(description="Keras Pipeline for RDM Modeling")
+    parser.add_argument("--root_dir", type=str, default=config.ROOT_DATA_DIR, help="Path to the root data directory")
+    args = parser.parse_args()
+
     ########################
     #   PREPARE FMRI DATA
     ########################
@@ -70,7 +76,7 @@ def main():
         desired_image_number=config.DESIRED_IMAGE_NUMBER,
         roi=config.ROI,
         region_class=config.REGION_CLASS,
-        root_data_dir=config.ROOT_DATA_DIR,
+        root_data_dir=f"{args.root_dir}/{config.ROOT_DATA_DIR}",
     )
 
     ########################
