@@ -2,7 +2,10 @@
 BIU python class final project
 
 ## Directory structure
+<details>
+<summary>Directory Structure</summary>
 
+```bash
 my_project/
   ├── config/
   │   ├── __init__.py
@@ -22,6 +25,7 @@ my_project/
   ├── main.py
   ├── clip_main.py
   └── pyproject.toml
+</details> ``` </details>
 
 ## On first run:
 ```bash 
