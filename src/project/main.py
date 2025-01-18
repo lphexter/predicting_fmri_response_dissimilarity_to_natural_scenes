@@ -82,7 +82,9 @@ def main():
     ########################
     #   PREPROCESS IMAGES
     ########################
-    image_dir = os.path.join(config.ROOT_DATA_DIR, f"subj0{config.SUBJECT}", "training_split", "training_images")
+    image_dir = os.path.join(
+        f"{args.root_dir}/{config.ROOT_DATA_DIR}", f"subj0{config.SUBJECT}", "training_split", "training_images"
+    )
     images = preprocess_images(
         image_dir=image_dir,
         num_images=config.DESIRED_IMAGE_NUMBER,

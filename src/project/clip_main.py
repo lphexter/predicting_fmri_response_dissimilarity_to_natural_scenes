@@ -61,7 +61,10 @@ def main():
     model_clip, processor_clip = load_clip_model(pretrained_model_name=clip_config.PRETRAINED_MODEL, device=device)
 
     image_dir = os.path.join(
-        clip_config.ROOT_DATA_DIR, f"subj0{clip_config.SUBJECT}", "training_split", "training_images"
+        f"{args.root_dir}/{clip_config.ROOT_DATA_DIR}",
+        f"subj0{clip_config.SUBJECT}",
+        "training_split",
+        "training_images",
     )
 
     embeddings = get_image_embeddings(
