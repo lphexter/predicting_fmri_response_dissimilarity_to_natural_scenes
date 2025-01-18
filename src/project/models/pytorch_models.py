@@ -1,14 +1,14 @@
 # models/pytorch_models.py
 
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
+import torch.nn.functional as F  # noqa: N812
+from torch import nn
+
 
 class NeuralNetwork(nn.Module):
-    """
-    Simple MLP: 1024 -> 512 -> 1, with optional hidden layers, final activation if needed.
-    """
-    def __init__(self, hidden_layers=1, activation_func='linear'):
+    """Simple MLP: 1024 -> 512 -> 1, with optional hidden layers, final activation if needed."""
+
+    def __init__(self, hidden_layers=1, activation_func="linear"):
         super().__init__()
         self.hidden_layers = hidden_layers
         self.activation_func = activation_func
@@ -30,18 +30,18 @@ class NeuralNetwork(nn.Module):
 
         x = self.layers[-1](x)
 
-        if self.activation_func == 'sigmoid':
+        if self.activation_func == "sigmoid":
             return torch.sigmoid(x) * 2
-        else:
-            return x
+        return x
 
 
 class DynamicLayerSizeNeuralNetwork(nn.Module):
-    """
-    MLP where each hidden layer halves the size from the previous layer.
+    """MLP where each hidden layer halves the size from the previous layer.
+
     e.g. 1024 -> 512 -> 256 -> ... -> 1
     """
-    def __init__(self, hidden_layers=1, activation_func='linear'):
+
+    def __init__(self, hidden_layers=1, activation_func="linear"):
         super().__init__()
         self.hidden_layers = hidden_layers
         self.activation_func = activation_func
@@ -65,23 +65,20 @@ class DynamicLayerSizeNeuralNetwork(nn.Module):
 
         x = self.layers[-1](x)
 
-        if self.activation_func == 'sigmoid':
+        if self.activation_func == "sigmoid":
             return torch.sigmoid(x) * 2
-        else:
-            return x
+        return x
 
 
 class LinearOnlyNet(nn.Module):
-    """
-    Simple Linear Regression - no hidden layers (optionally change activation function)
-    """
-    def __init__(self, activation_func='linear'):
+    """Simple Linear Regression - no hidden layers (optionally change activation function)"""
+
+    def __init__(self, activation_func="linear"):
         super().__init__()
         self.activation_func = activation_func
         self.linear = nn.Linear(1024, 1)
 
     def forward(self, x):
-      if self.activation_func == "sigmoid":
-        return torch.sigmoid(self.linear(x)) * 2
-      else:
+        if self.activation_func == "sigmoid":
+            return torch.sigmoid(self.linear(x)) * 2
         return self.linear(x)  # no hidden layer, purely linear

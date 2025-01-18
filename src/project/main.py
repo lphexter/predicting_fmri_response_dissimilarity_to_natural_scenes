@@ -1,24 +1,25 @@
 # main.py
 
 import os
+
 import numpy as np
 import tensorflow as tf
-from tensorflow.keras.callbacks import EarlyStopping
-from scipy.stats import spearmanr, pearsonr
+from scipy.stats import pearsonr, spearmanr
 from sklearn.metrics import r2_score
+from tensorflow.keras.callbacks import EarlyStopping
 
 # Local imports
 from .config import config
+from .models.models import correlation_loss_with_mse, create_cnn_model
 from .utils.data_utils import (
-    prepare_fmri_data,
-    preprocess_images,
     create_rdm,
     create_rdm_from_vectors,
+    prepare_fmri_data,
+    preprocess_images,
 )
-from .models.models import create_cnn_model, correlation_loss_with_mse
 from .utils.visualizations import (
-    plot_rdm_submatrix,
     plot_rdm_distribution,
+    plot_rdm_submatrix,
     plot_rdms,
 )
 
@@ -31,12 +32,11 @@ def prepare_data_for_cnn(rdm, test_size=0.2):
     rdm_values = rdm[row_indices, col_indices]
 
     train_indices, test_indices, y_train, y_test = train_test_split(
-        np.arange(len(rdm_values)), rdm_values,
-        test_size=test_size, random_state=42
+        np.arange(len(rdm_values)), rdm_values, test_size=test_size, random_state=42
     )
 
     X_train_indices = (row_indices[train_indices], col_indices[train_indices])
-    X_test_indices  = (row_indices[test_indices],  col_indices[test_indices])
+    X_test_indices = (row_indices[test_indices], col_indices[test_indices])
     return X_train_indices, X_test_indices, y_train, y_test
 
 
@@ -52,7 +52,7 @@ def data_generator(image_data, pair_indices, y_data, batch_size=32):
             batch_cols = col_indices[offset:end]
             batch_x1 = image_data[batch_rows]
             batch_x2 = image_data[batch_cols]
-            batch_y  = y_data[offset:end]
+            batch_y = y_data[offset:end]
 
             # Add channel dimension
             batch_x1 = batch_x1[..., np.newaxis]
@@ -76,17 +76,12 @@ def main():
     ########################
     #   PREPROCESS IMAGES
     ########################
-    image_dir = os.path.join(
-        config.ROOT_DATA_DIR,
-        f"subj0{config.SUBJECT}",
-        "training_split",
-        "training_images"
-    )
+    image_dir = os.path.join(config.ROOT_DATA_DIR, f"subj0{config.SUBJECT}", "training_split", "training_images")
     images = preprocess_images(
         image_dir=image_dir,
         num_images=config.DESIRED_IMAGE_NUMBER,
         new_width=config.NEW_WIDTH,
-        new_height=config.NEW_HEIGHT
+        new_height=config.NEW_HEIGHT,
     )
     print("Images shape:", images.shape)
 
@@ -100,10 +95,7 @@ def main():
     ########################
     #   PREPARE FOR TRAINING
     ########################
-    X_train_indices, X_test_indices, y_train, y_test = prepare_data_for_cnn(
-        rdm,
-        test_size=config.TEST_SIZE
-    )
+    X_train_indices, X_test_indices, y_train, y_test = prepare_data_for_cnn(rdm, test_size=config.TEST_SIZE)
 
     train_dataset = tf.data.Dataset.from_generator(
         lambda: data_generator(images, X_train_indices, y_train, batch_size=config.BATCH_SIZE),
@@ -131,12 +123,10 @@ def main():
     #   CREATE & COMPILE MODEL
     ########################
     model = create_cnn_model(
-        input_shape=(config.NEW_HEIGHT, config.NEW_WIDTH, config.NUM_CHANNELS),
-        activation_func=config.ACTIVATION_FUNC
+        input_shape=(config.NEW_HEIGHT, config.NEW_WIDTH, config.NUM_CHANNELS), activation_func=config.ACTIVATION_FUNC
     )
     model.compile(
-        loss=lambda y_true, y_pred: correlation_loss_with_mse(y_true, y_pred, alpha=config.ALPHA),
-        optimizer="adam"
+        loss=lambda y_true, y_pred: correlation_loss_with_mse(y_true, y_pred, alpha=config.ALPHA), optimizer="adam"
     )
     model.summary()
 
@@ -158,17 +148,17 @@ def main():
     y_pred = model.predict(test_dataset, steps=(len(y_test) // config.BATCH_SIZE) + 1).flatten()
 
     # Evaluate based on chosen metric
-    if config.ACCURACY == 'spearman':
+    if config.ACCURACY == "spearman":
         corr_val, _ = spearmanr(y_pred, y_test)
         print(f"Spearman Correlation: {corr_val}")
-    elif config.ACCURACY == 'pearson':
+    elif config.ACCURACY == "pearson":
         corr_val, _ = pearsonr(y_pred, y_test)
         print(f"Pearson Correlation: {corr_val}")
-    elif config.ACCURACY == 'r2':
+    elif config.ACCURACY == "r2":
         r2_val = r2_score(y_test, y_pred)
         print(f"R^2 Score: {r2_val}")
     else:
-        raise ValueError(f"Invalid accuracy metric: {config.ACCURACY}")
+        raise ValueError(f"Invalid accuracy metric: {config.ACCURACY}")  # noqa: TRY003, EM102
 
     # Print all three, for reference
     corr_sp, _ = spearmanr(y_pred, y_test)
@@ -183,6 +173,7 @@ def main():
     predicted_rdm = create_rdm_from_vectors(y_pred[:1000])
     ground_truth_rdm = create_rdm_from_vectors(y_test[:1000])
     plot_rdms(ground_truth_rdm, predicted_rdm)
+
 
 if __name__ == "__main__":
     main()

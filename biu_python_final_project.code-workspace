@@ -40,6 +40,26 @@
 			"source.organizeImports": "always",
 			"source.fixAll.ruff": "always",
 			"source.fixAll": "always"
+		}, 
+				"ruff.codeAction.disableRuleComment": {
+		"enable": true
 		},
+		"ruff.codeAction.fixViolation": {
+			"enable": true
+		},
+		"ruff.configurationPreference": "editorFirst",
+		"ruff.enable": true,
+		"ruff.enableExperimentalFormatter": false,
+		"ruff.fixAll": true,
+		"ruff.ignoreStandardLibrary": true,
+		"ruff.importStrategy": "fromEnvironment",
+		"ruff.lint.enable": true,
+		"ruff.nativeServer": "auto",
+		"ruff.organizeImports": true,
+		"ruff.path": [],
+		"ruff.lint.run": "onSave",
+		"ruff.showNotifications": "off",
+		"ruff.showSyntaxErrors": true,
+		"ruff.trace.server": "off",
 	}
 }

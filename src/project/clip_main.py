@@ -1,26 +1,33 @@
 # clip_main.py
 
+"""clip_main Module
+
+This module serves as the entry point for running the CLIP model implementation.
+
+Functions:
+    main(): The main function that starts the application.
+"""
+
 import os
+
 import torch
-import numpy as np
+from torch import nn, optim
+from torch.utils.data import DataLoader
 
 from .config import clip_config
-from .utils.data_utils import prepare_fmri_data, create_rdm
-from .utils.clip_utils import load_clip_model, get_image_embeddings
-from .utils.pytorch_data import generate_pair_indices, train_test_split_pairs, PairDataset
-from .models.pytorch_models import NeuralNetwork, DynamicLayerSizeNeuralNetwork
-from .utils.pytorch_training import train_model, reconstruct_predicted_rdm
+from .models.pytorch_models import DynamicLayerSizeNeuralNetwork, NeuralNetwork
+from .utils.clip_utils import get_image_embeddings, load_clip_model
+from .utils.data_utils import create_rdm, prepare_fmri_data
+from .utils.pytorch_data import PairDataset, generate_pair_indices, train_test_split_pairs
+from .utils.pytorch_training import reconstruct_predicted_rdm, train_model
 from .utils.visualizations import (
-    plot_rdm_submatrix,
+    plot_accuracy_vs_layers,
     plot_rdm_distribution,
+    plot_rdm_submatrix,
     plot_rdms,
     plot_training_history,
-    plot_accuracy_vs_layers,
 )
 
-import torch.nn as nn
-import torch.optim as optim
-from torch.utils.data import DataLoader
 
 def main():
     #######################
@@ -31,7 +38,7 @@ def main():
         desired_image_number=clip_config.DESIRED_IMAGE_NUMBER,
         roi=clip_config.ROI,
         region_class=clip_config.REGION_CLASS,
-        root_data_dir=clip_config.ROOT_DATA_DIR
+        root_data_dir=clip_config.ROOT_DATA_DIR,
     )
     rdm = create_rdm(fmri_data, metric=clip_config.METRIC)
 
@@ -43,16 +50,10 @@ def main():
     #     CLIP EMBEDDINGS
     #######################
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    model_clip, processor_clip = load_clip_model(
-        pretrained_model_name=clip_config.PRETRAINED_MODEL,
-        device=device
-    )
+    model_clip, processor_clip = load_clip_model(pretrained_model_name=clip_config.PRETRAINED_MODEL, device=device)
 
     image_dir = os.path.join(
-        clip_config.ROOT_DATA_DIR,
-        f"subj0{clip_config.SUBJECT}",
-        "training_split",
-        "training_images"
+        clip_config.ROOT_DATA_DIR, f"subj0{clip_config.SUBJECT}", "training_split", "training_images"
     )
 
     embeddings = get_image_embeddings(
@@ -60,7 +61,7 @@ def main():
         processor=processor_clip,
         model=model_clip,
         desired_image_number=clip_config.DESIRED_IMAGE_NUMBER,
-        device=device
+        device=device,
     )
     print("Embeddings shape:", embeddings.shape)
 
@@ -69,23 +70,21 @@ def main():
     #######################
     row_indices, col_indices, rdm_values = generate_pair_indices(rdm)
     X_train_indices, X_test_indices, y_train, y_test = train_test_split_pairs(
-        row_indices, col_indices, rdm_values,
-        test_size=clip_config.TEST_SIZE
+        row_indices, col_indices, rdm_values, test_size=clip_config.TEST_SIZE
     )
 
     train_dataset = PairDataset(embeddings, X_train_indices, y_train)
-    test_dataset  = PairDataset(embeddings, X_test_indices, y_test)
+    test_dataset = PairDataset(embeddings, X_test_indices, y_test)
 
     train_loader = DataLoader(train_dataset, batch_size=clip_config.BATCH_SIZE, shuffle=True)
-    test_loader  = DataLoader(test_dataset,  batch_size=clip_config.BATCH_SIZE, shuffle=False)
+    test_loader = DataLoader(test_dataset, batch_size=clip_config.BATCH_SIZE, shuffle=False)
 
     #######################
     #   MODEL + TRAIN
     #######################
-    model = NeuralNetwork(
-        hidden_layers=clip_config.HIDDEN_LAYERS,
-        activation_func=clip_config.ACTIVATION_FUNC
-    ).to(device)
+    model = NeuralNetwork(hidden_layers=clip_config.HIDDEN_LAYERS, activation_func=clip_config.ACTIVATION_FUNC).to(
+        device
+    )
 
     criterion = nn.MSELoss()
     optimizer = optim.Adam(model.parameters(), lr=clip_config.LEARNING_RATE)
@@ -98,7 +97,7 @@ def main():
         optimizer,
         device,
         num_epochs=clip_config.EPOCHS,
-        metric=clip_config.ACCURACY
+        metric=clip_config.ACCURACY,
     )
 
     # Plot training curves
@@ -118,8 +117,7 @@ def main():
         accuracy_list = []
         for layer_num in layers_list:
             sweep_model = DynamicLayerSizeNeuralNetwork(
-                hidden_layers=layer_num,
-                activation_func=clip_config.ACTIVATION_FUNC
+                hidden_layers=layer_num, activation_func=clip_config.ACTIVATION_FUNC
             ).to(device)
 
             sweep_optimizer = optim.Adam(sweep_model.parameters(), lr=clip_config.LEARNING_RATE)
@@ -131,7 +129,7 @@ def main():
                 sweep_optimizer,
                 device,
                 num_epochs=clip_config.EPOCHS,
-                metric=clip_config.ACCURACY
+                metric=clip_config.ACCURACY,
             )
             accuracy_list.append(max(sweep_test_acc))
 

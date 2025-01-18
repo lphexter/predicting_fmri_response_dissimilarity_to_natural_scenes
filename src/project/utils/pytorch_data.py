@@ -1,30 +1,29 @@
-# utils/pytorch_data.py
-
 import numpy as np
 import torch
 from torch.utils.data import Dataset
+
 
 def generate_pair_indices(rdm):
     row_indices, col_indices = np.triu_indices(n=rdm.shape[0], k=1)
     rdm_values = rdm[row_indices, col_indices]
     return row_indices, col_indices, rdm_values
 
+
 def train_test_split_pairs(row_indices, col_indices, rdm_values, test_size=0.2, random_state=42):
     from sklearn.model_selection import train_test_split
+
     all_pair_indices = np.arange(len(rdm_values))
 
     train_idx, test_idx, y_train, y_test = train_test_split(
-        all_pair_indices,
-        rdm_values,
-        test_size=test_size,
-        random_state=random_state
+        all_pair_indices, rdm_values, test_size=test_size, random_state=random_state
     )
 
     X_train_indices = (row_indices[train_idx], col_indices[train_idx])
-    X_test_indices  = (row_indices[test_idx],  col_indices[test_idx])
+    X_test_indices = (row_indices[test_idx], col_indices[test_idx])
     return X_train_indices, X_test_indices, y_train, y_test
 
-class PairDataset(Dataset):
+
+class PairDataset(Dataset):  # noqa: D101
     def __init__(self, embeddings, pair_indices, y_data):
         super().__init__()
         self.embeddings = embeddings

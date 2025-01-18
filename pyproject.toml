@@ -74,6 +74,15 @@ lint.ignore = [
     "E501", # ignore line too long
     "D103", # ignore docstrings
     "PLR2004", # ignore magic number
+    "PTH118", # ignore Path module requirement
+    "D104", # ignore docstring
+    "D100", # ignore docstring
+    "ANN202",
+    "ANN204", 
+    "D105",
+    "N806",
+    "D107", # ignore docstring for __init__
+    "D102", # ignore docstring in public method
 ]
 
 [tool.ruff.lint.per-file-ignores]
@@ -90,7 +99,7 @@ keep-runtime-typing = true
 convention = "google"
 
 [tool.mypy]
-disallow_untyped_defs = true # Functions need to be annotated
+disallow_untyped_defs = false
 warn_unused_ignores = true
 ignore_missing_imports = true
 exclude = [
