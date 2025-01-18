@@ -1,4 +1,4 @@
-# clip_config.py
+# config/clip_config.py
 
 #############################################
 # USER / EXPERIMENTAL PARAMETERS (Pipeline 2)
@@ -17,9 +17,9 @@ PRETRAINED_MODEL = "openai/clip-vit-base-patch32"
 #############################################
 # RDM / TRAIN PARAMS
 #############################################
-METRIC = "euclidean"       # or "correlation"
-ACCURACY = "r2"            # "spearman", "pearson", "r2"
-ACTIVATION_FUNC = "linear" # or "sigmoid"
+METRIC = "euclidean"             # or "correlation"
+ACCURACY = "r2"                  # "spearman", "pearson", or "r2"
+ACTIVATION_FUNC = "linear"       # or "sigmoid"
 EPOCHS = 20
 LEARNING_RATE = 0.05
 BATCH_SIZE = 32

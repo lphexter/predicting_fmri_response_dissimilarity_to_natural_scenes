@@ -1,4 +1,4 @@
-# pytorch_training.py
+# utils/pytorch_training.py
 
 import numpy as np
 import torch
@@ -6,14 +6,9 @@ from torch.utils.data import DataLoader
 from sklearn.metrics import r2_score
 from scipy.stats import pearsonr, spearmanr
 
-from pytorch_data import PairDataset
+from utils.pytorch_data import PairDataset
 
 def compute_accuracy(predictions, targets, metric='r2'):
-    """
-    predictions: (batch_size,)
-    targets: (batch_size,)
-    returns: float
-    """
     pred_np = predictions.detach().cpu().numpy()
     targ_np = targets.detach().cpu().numpy()
 
@@ -101,21 +96,15 @@ def train_model(
 
         print(f"[Epoch {epoch+1}/{num_epochs}] "
               f"Train Loss: {epoch_train_loss:.4f}, {metric}: {epoch_train_acc:.4f} | "
-              f"Test Loss: {epoch_test_loss:.4f}, {metric}: {epoch_test_acc:.4f}")
+              f"Test  Loss: {epoch_test_loss:.4f}, {metric}: {epoch_test_acc:.4f}")
 
     return train_loss_history, train_acc_history, test_loss_history, test_acc_history
 
 def reconstruct_predicted_rdm(model, embeddings, row_indices, col_indices, device):
-    """
-    Builds a predicted RDM matrix of shape (N, N) by passing each pair
-    through the model.
-    """
     N = embeddings.shape[0]
     predicted_rdm = np.zeros((N, N), dtype=np.float32)
 
-    # dummy label array
     dummy_y = np.zeros(len(row_indices), dtype=np.float32)
-
     dataset = PairDataset(embeddings, (row_indices, col_indices), dummy_y)
     loader = DataLoader(dataset, batch_size=32, shuffle=False)
 
@@ -129,7 +118,6 @@ def reconstruct_predicted_rdm(model, embeddings, row_indices, col_indices, devic
             preds_list.append(batch_preds.cpu().numpy())
 
     all_preds = np.concatenate(preds_list)
-
     for i, (r, c) in enumerate(zip(row_indices, col_indices)):
         predicted_rdm[r, c] = all_preds[i]
         predicted_rdm[c, r] = all_preds[i]

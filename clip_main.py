@@ -4,18 +4,18 @@ import os
 import torch
 import numpy as np
 
-import clip_config
-from data_utils import prepare_fmri_data, create_rdm
-from clip_utils import load_clip_model, get_image_embeddings
-from pytorch_data import generate_pair_indices, train_test_split_pairs, PairDataset
-from pytorch_models import NeuralNetwork, DynamicLayerSizeNeuralNetwork
-from pytorch_training import train_model, reconstruct_predicted_rdm
-from visualizations import (
+from config import clip_config
+from utils.data_utils import prepare_fmri_data, create_rdm
+from utils.clip_utils import load_clip_model, get_image_embeddings
+from utils.pytorch_data import generate_pair_indices, train_test_split_pairs, PairDataset
+from models.pytorch_models import NeuralNetwork, DynamicLayerSizeNeuralNetwork
+from utils.pytorch_training import train_model, reconstruct_predicted_rdm
+from utils.visualizations import (
     plot_rdm_submatrix,
     plot_rdm_distribution,
     plot_rdms,
     plot_training_history,
-    plot_accuracy_vs_layers
+    plot_accuracy_vs_layers,
 )
 
 import torch.nn as nn
@@ -35,7 +35,7 @@ def main():
     )
     rdm = create_rdm(fmri_data, metric=clip_config.METRIC)
 
-    # Optional: plot a subset
+    # Plot subset + distribution
     plot_rdm_submatrix(rdm, subset_size=100)
     plot_rdm_distribution(rdm, bins=30, exclude_diagonal=True)
 
@@ -43,7 +43,10 @@ def main():
     #     CLIP EMBEDDINGS
     #######################
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    model_clip, processor_clip = load_clip_model(clip_config.PRETRAINED_MODEL, device=device)
+    model_clip, processor_clip = load_clip_model(
+        pretrained_model_name=clip_config.PRETRAINED_MODEL,
+        device=device
+    )
 
     image_dir = os.path.join(
         clip_config.ROOT_DATA_DIR,
@@ -130,7 +133,6 @@ def main():
                 num_epochs=clip_config.EPOCHS,
                 metric=clip_config.ACCURACY
             )
-
             accuracy_list.append(max(sweep_test_acc))
 
             # Optionally save

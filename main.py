@@ -8,15 +8,15 @@ from scipy.stats import spearmanr, pearsonr
 from sklearn.metrics import r2_score
 
 # Local imports
-import config
-from data_utils import (
+from config import config
+from utils.data_utils import (
     prepare_fmri_data,
     preprocess_images,
     create_rdm,
     create_rdm_from_vectors,
 )
-from models import create_cnn_model, correlation_loss_with_mse
-from visualizations import (
+from models.models import create_cnn_model, correlation_loss_with_mse
+from utils.visualizations import (
     plot_rdm_submatrix,
     plot_rdm_distribution,
     plot_rdms,
@@ -24,17 +24,15 @@ from visualizations import (
 
 
 def prepare_data_for_cnn(rdm, test_size=0.2):
-    """
-    Splits the upper-tri pairs of RDM into train/test sets.
-    Returns pair indices and corresponding RDM values for train/test.
-    """
     from sklearn.model_selection import train_test_split
+
     num_images = rdm.shape[0]
     row_indices, col_indices = np.triu_indices(num_images, k=1)
     rdm_values = rdm[row_indices, col_indices]
 
     train_indices, test_indices, y_train, y_test = train_test_split(
-        np.arange(len(rdm_values)), rdm_values, test_size=test_size, random_state=42
+        np.arange(len(rdm_values)), rdm_values,
+        test_size=test_size, random_state=42
     )
 
     X_train_indices = (row_indices[train_indices], col_indices[train_indices])
@@ -43,9 +41,6 @@ def prepare_data_for_cnn(rdm, test_size=0.2):
 
 
 def data_generator(image_data, pair_indices, y_data, batch_size=32):
-    """
-    Generator yielding (batch_x1, batch_x2), batch_y for Siamese model.
-    """
     num_samples = len(y_data)
     row_indices, col_indices = pair_indices
 
@@ -59,6 +54,7 @@ def data_generator(image_data, pair_indices, y_data, batch_size=32):
             batch_x2 = image_data[batch_cols]
             batch_y  = y_data[offset:end]
 
+            # Add channel dimension
             batch_x1 = batch_x1[..., np.newaxis]
             batch_x2 = batch_x2[..., np.newaxis]
 
@@ -81,8 +77,10 @@ def main():
     #   PREPROCESS IMAGES
     ########################
     image_dir = os.path.join(
-        config.ROOT_DATA_DIR, f"subj0{config.SUBJECT}",
-        "training_split", "training_images"
+        config.ROOT_DATA_DIR,
+        f"subj0{config.SUBJECT}",
+        "training_split",
+        "training_images"
     )
     images = preprocess_images(
         image_dir=image_dir,
@@ -107,7 +105,6 @@ def main():
         test_size=config.TEST_SIZE
     )
 
-    # Create tf.data.Dataset from generator
     train_dataset = tf.data.Dataset.from_generator(
         lambda: data_generator(images, X_train_indices, y_train, batch_size=config.BATCH_SIZE),
         output_signature=(
@@ -160,6 +157,7 @@ def main():
     ########################
     y_pred = model.predict(test_dataset, steps=(len(y_test) // config.BATCH_SIZE) + 1).flatten()
 
+    # Evaluate based on chosen metric
     if config.ACCURACY == 'spearman':
         corr_val, _ = spearmanr(y_pred, y_test)
         print(f"Spearman Correlation: {corr_val}")
@@ -172,7 +170,7 @@ def main():
     else:
         raise ValueError(f"Invalid accuracy metric: {config.ACCURACY}")
 
-    # Also compute all three if you wish
+    # Print all three, for reference
     corr_sp, _ = spearmanr(y_pred, y_test)
     corr_pe, _ = pearsonr(y_pred, y_test)
     r2_val = r2_score(y_test, y_pred)
@@ -181,10 +179,10 @@ def main():
     ########################
     #     RDM COMPARISON
     ########################
-    predicted_rdm = create_rdm_from_vectors(y_pred[:1000])  # partial for demonstration
-    rdm_true       = create_rdm_from_vectors(y_test[:1000])
-
-    plot_rdms(rdm_true, predicted_rdm)
+    # Just an example of partially reconstructing:
+    predicted_rdm = create_rdm_from_vectors(y_pred[:1000])
+    ground_truth_rdm = create_rdm_from_vectors(y_test[:1000])
+    plot_rdms(ground_truth_rdm, predicted_rdm)
 
 if __name__ == "__main__":
     main()

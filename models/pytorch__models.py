@@ -1,4 +1,4 @@
-# pytorch_models.py
+# models/pytorch_models.py
 
 import torch
 import torch.nn as nn
@@ -6,7 +6,7 @@ import torch.nn.functional as F
 
 class NeuralNetwork(nn.Module):
     """
-    Simple MLP: 1024 -> 512 -> 1, with optional ReLU, plus final activation if needed.
+    Simple MLP: 1024 -> 512 -> 1, with optional hidden layers, final activation if needed.
     """
     def __init__(self, hidden_layers=1, activation_func='linear'):
         super().__init__()
@@ -39,7 +39,7 @@ class NeuralNetwork(nn.Module):
 class DynamicLayerSizeNeuralNetwork(nn.Module):
     """
     MLP where each hidden layer halves the size from the previous layer.
-    E.g.: 1024 -> 512 -> 256 -> 128 -> 1
+    e.g. 1024 -> 512 -> 256 -> ... -> 1
     """
     def __init__(self, hidden_layers=1, activation_func='linear'):
         super().__init__()
