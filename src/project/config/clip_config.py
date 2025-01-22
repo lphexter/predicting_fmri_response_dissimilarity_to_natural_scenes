@@ -11,6 +11,7 @@ DESIRED_IMAGE_NUMBER = 10
 # CLIP MODEL
 #############################################
 PRETRAINED_MODEL = "openai/clip-vit-base-patch32"
+LOAD_EMBEDDINGS_FILE = "embeddings_2500_1.npy"
 
 #############################################
 # RDM / TRAIN PARAMS
@@ -23,6 +24,8 @@ LEARNING_RATE = 0.05
 BATCH_SIZE = 32
 TEST_SIZE = 0.2
 HIDDEN_LAYERS = 1
+K_FOLD = True  # default to using K-fold cross-validation
+K_FOLD_SPLITS = 5
 
 #############################################
 # OTHER
