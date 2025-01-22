@@ -1,186 +1,198 @@
 # main.py
 
+"""main Module
+
+This module serves as the entry point for running the CLIP model implementation.
+
+Functions:
+    main(): The main function that starts the application.
+"""
+
 import argparse
 import os
 
 import numpy as np
-import tensorflow as tf
-from scipy.stats import pearsonr, spearmanr
-from sklearn.metrics import r2_score
-from tensorflow.keras.callbacks import EarlyStopping
+import torch
+from torch import nn, optim
+from torch.utils.data import DataLoader
 
-# Local imports
-from .config import config
-from .models.models import correlation_loss_with_mse, create_cnn_model
-from .utils.data_utils import (
-    create_rdm,
-    create_rdm_from_vectors,
-    prepare_fmri_data,
-    preprocess_images,
-)
+from .config import clip_config
+from .models.pytorch_models import DynamicLayerSizeNeuralNetwork, NeuralNetwork
+from .utils.clip_utils import get_image_embeddings, load_clip_model
+from .utils.data_utils import create_rdm, prepare_fmri_data
+from .utils.pytorch_data import PairDataset, generate_pair_indices, prepare_data_for_kfold, train_test_split_pairs
+from .utils.pytorch_training import reconstruct_predicted_rdm, train_model, train_model_kfold
 from .utils.visualizations import (
+    plot_accuracy_vs_layers,
     plot_rdm_distribution,
     plot_rdm_submatrix,
     plot_rdms,
+    plot_training_history,
 )
 
 
-def prepare_data_for_cnn(rdm, test_size=0.2):
-    from sklearn.model_selection import train_test_split
-
-    num_images = rdm.shape[0]
-    row_indices, col_indices = np.triu_indices(num_images, k=1)
-    rdm_values = rdm[row_indices, col_indices]
-
-    train_indices, test_indices, y_train, y_test = train_test_split(
-        np.arange(len(rdm_values)), rdm_values, test_size=test_size, random_state=42
-    )
-
-    X_train_indices = (row_indices[train_indices], col_indices[train_indices])
-    X_test_indices = (row_indices[test_indices], col_indices[test_indices])
-    return X_train_indices, X_test_indices, y_train, y_test
-
-
-def data_generator(image_data, pair_indices, y_data, batch_size=32):
-    num_samples = len(y_data)
-    row_indices, col_indices = pair_indices
-
-    while True:
-        for offset in range(0, num_samples, batch_size):
-            end = offset + batch_size
-
-            batch_rows = row_indices[offset:end]
-            batch_cols = col_indices[offset:end]
-            batch_x1 = image_data[batch_rows]
-            batch_x2 = image_data[batch_cols]
-            batch_y = y_data[offset:end]
-
-            # Add channel dimension
-            batch_x1 = batch_x1[..., np.newaxis]
-            batch_x2 = batch_x2[..., np.newaxis]
-
-            yield (batch_x1, batch_x2), batch_y
-
-
-def main():
+def main():  # noqa: PLR0915
     # Parse command-line arguments
-    parser = argparse.ArgumentParser(description="Keras Pipeline for RDM Modeling")
-    parser.add_argument("--root_dir", type=str, default=config.ROOT_DATA_DIR, help="Path to the root data directory")
+    parser = argparse.ArgumentParser(description="CLIP + PyTorch Pipeline for RDM Modeling")
+    parser.add_argument(
+        "--root_dir", type=str, default=clip_config.ROOT_DATA_DIR, help="Path to the root data directory"
+    )
     args = parser.parse_args()
 
-    ########################
-    #   PREPARE FMRI DATA
-    ########################
+    #######################
+    #   LOAD / PREP FMRI
+    #######################
     fmri_data = prepare_fmri_data(
-        subj=config.SUBJECT,
-        desired_image_number=config.DESIRED_IMAGE_NUMBER,
-        roi=config.ROI,
-        region_class=config.REGION_CLASS,
-        root_data_dir=f"{args.root_dir}/{config.ROOT_DATA_DIR}",
+        subj=clip_config.SUBJECT,
+        desired_image_number=clip_config.DESIRED_IMAGE_NUMBER,
+        roi=clip_config.ROI,
+        region_class=clip_config.REGION_CLASS,
+        root_data_dir=f"{args.root_dir}/{clip_config.ROOT_DATA_DIR}",
     )
+    rdm = create_rdm(fmri_data, metric=clip_config.METRIC)
 
-    ########################
-    #   PREPROCESS IMAGES
-    ########################
-    image_dir = os.path.join(
-        f"{args.root_dir}/{config.ROOT_DATA_DIR}", f"subj0{config.SUBJECT}", "training_split", "training_images"
-    )
-    images = preprocess_images(
-        image_dir=image_dir,
-        num_images=config.DESIRED_IMAGE_NUMBER,
-        new_width=config.NEW_WIDTH,
-        new_height=config.NEW_HEIGHT,
-    )
-    print("Images shape:", images.shape)
-
-    ########################
-    #   CREATE & ANALYZE RDM
-    ########################
-    rdm = create_rdm(fmri_data, metric=config.METRIC)
+    # Plot subset + distribution
     plot_rdm_submatrix(rdm, subset_size=100)
     plot_rdm_distribution(rdm, bins=30, exclude_diagonal=True)
 
-    ########################
-    #   PREPARE FOR TRAINING
-    ########################
-    X_train_indices, X_test_indices, y_train, y_test = prepare_data_for_cnn(rdm, test_size=config.TEST_SIZE)
+    #######################
+    #     CLIP EMBEDDINGS
+    #######################
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    model_clip, processor_clip = load_clip_model(pretrained_model_name=clip_config.PRETRAINED_MODEL, device=device)
 
-    train_dataset = tf.data.Dataset.from_generator(
-        lambda: data_generator(images, X_train_indices, y_train, batch_size=config.BATCH_SIZE),
-        output_signature=(
-            (
-                tf.TensorSpec(shape=(None, config.NEW_HEIGHT, config.NEW_WIDTH, config.NUM_CHANNELS), dtype=tf.float32),
-                tf.TensorSpec(shape=(None, config.NEW_HEIGHT, config.NEW_WIDTH, config.NUM_CHANNELS), dtype=tf.float32),
-            ),
-            tf.TensorSpec(shape=(None,), dtype=tf.float32),
-        ),
+    image_dir = os.path.join(
+        f"{args.root_dir}/{clip_config.ROOT_DATA_DIR}",
+        f"subj0{clip_config.SUBJECT}",
+        "training_split",
+        "training_images",
     )
 
-    test_dataset = tf.data.Dataset.from_generator(
-        lambda: data_generator(images, X_test_indices, y_test, batch_size=config.BATCH_SIZE),
-        output_signature=(
-            (
-                tf.TensorSpec(shape=(None, config.NEW_HEIGHT, config.NEW_WIDTH, config.NUM_CHANNELS), dtype=tf.float32),
-                tf.TensorSpec(shape=(None, config.NEW_HEIGHT, config.NEW_WIDTH, config.NUM_CHANNELS), dtype=tf.float32),
-            ),
-            tf.TensorSpec(shape=(None,), dtype=tf.float32),
-        ),
+    embeddings = get_image_embeddings(
+        image_dir=image_dir,
+        processor=processor_clip,
+        model=model_clip,
+        desired_image_number=clip_config.DESIRED_IMAGE_NUMBER,
+        device=device,
     )
+    print("Embeddings shape:", embeddings.shape)
 
-    ########################
-    #   CREATE & COMPILE MODEL
-    ########################
-    model = create_cnn_model(
-        input_shape=(config.NEW_HEIGHT, config.NEW_WIDTH, config.NUM_CHANNELS), activation_func=config.ACTIVATION_FUNC
-    )
-    model.compile(
-        loss=lambda y_true, y_pred: correlation_loss_with_mse(y_true, y_pred, alpha=config.ALPHA), optimizer="adam"
-    )
-    model.summary()
+    row_indices, col_indices, rdm_values = generate_pair_indices(rdm)
+    criterion = nn.MSELoss()
 
-    ########################
-    #       TRAIN
-    ########################
-    model.fit(
-        train_dataset,
-        steps_per_epoch=len(y_train) // config.BATCH_SIZE,
-        epochs=config.EPOCHS,
-        validation_data=test_dataset,
-        validation_steps=len(y_test) // config.BATCH_SIZE,
-        callbacks=[EarlyStopping(patience=3, restore_best_weights=True)],
-    )
+    if not clip_config.K_FOLD:  # standard training
+        #######################
+        #    DATA PAIRS
+        #######################
 
-    ########################
-    #     EVALUATE
-    ########################
-    y_pred = model.predict(test_dataset, steps=(len(y_test) // config.BATCH_SIZE) + 1).flatten()
+        X_train_indices, X_test_indices, y_train, y_test = train_test_split_pairs(
+            row_indices, col_indices, rdm_values, test_size=clip_config.TEST_SIZE
+        )
 
-    # Evaluate based on chosen metric
-    if config.ACCURACY == "spearman":
-        corr_val, _ = spearmanr(y_pred, y_test)
-        print(f"Spearman Correlation: {corr_val}")
-    elif config.ACCURACY == "pearson":
-        corr_val, _ = pearsonr(y_pred, y_test)
-        print(f"Pearson Correlation: {corr_val}")
-    elif config.ACCURACY == "r2":
-        r2_val = r2_score(y_test, y_pred)
-        print(f"R^2 Score: {r2_val}")
+        train_dataset = PairDataset(embeddings, X_train_indices, y_train)
+        test_dataset = PairDataset(embeddings, X_test_indices, y_test)
+
+        train_loader = DataLoader(train_dataset, batch_size=clip_config.BATCH_SIZE, shuffle=True)
+        test_loader = DataLoader(test_dataset, batch_size=clip_config.BATCH_SIZE, shuffle=False)
+
+        #######################
+        #   MODEL + TRAIN
+        #######################
+        model = NeuralNetwork(hidden_layers=clip_config.HIDDEN_LAYERS, activation_func=clip_config.ACTIVATION_FUNC).to(
+            device
+        )
+
+        optimizer = optim.Adam(model.parameters(), lr=clip_config.LEARNING_RATE)
+        train_loss, train_acc, test_loss, test_acc = train_model(
+            model,
+            train_loader,
+            test_loader,
+            criterion,
+            optimizer,
+            device,
+            num_epochs=clip_config.EPOCHS,
+        )
+
     else:
-        raise ValueError(f"Invalid accuracy metric: {config.ACCURACY}")  # noqa: TRY003, EM102
+        loaders = prepare_data_for_kfold(embeddings, rdm, n_splits=clip_config.K_FOLD_SPLITS)
+        train_loss, train_acc, test_loss, test_acc = train_model_kfold(
+            loaders, criterion, device, num_layers=clip_config.HIDDEN_LAYERS, num_epochs=clip_config.EPOCHS
+        )
 
-    # Print all three, for reference
-    corr_sp, _ = spearmanr(y_pred, y_test)
-    corr_pe, _ = pearsonr(y_pred, y_test)
-    r2_val = r2_score(y_test, y_pred)
-    print(f"[All metrics] Spearman: {corr_sp}, Pearson: {corr_pe}, R^2: {r2_val}")
+    #######################
+    #    PLOT TRAINING CURVES
+    #######################
+    if not clip_config.K_FOLD:
+        # Standard training mode plotting
+        plot_training_history(train_loss, train_acc, test_loss, test_acc, metric=clip_config.ACCURACY)
+    else:
+        # K-Fold mode: Calculate mean and std across folds
+        train_loss_mean = np.mean(train_loss, axis=0)
+        train_acc_mean = np.mean(train_acc, axis=0)
+        test_loss_mean = np.mean(test_loss, axis=0)
+        test_acc_mean = np.mean(test_acc, axis=0)
 
-    ########################
-    #     RDM COMPARISON
-    ########################
-    # Just an example of partially reconstructing:
-    predicted_rdm = create_rdm_from_vectors(y_pred[:1000])
-    ground_truth_rdm = create_rdm_from_vectors(y_test[:1000])
-    plot_rdms(ground_truth_rdm, predicted_rdm)
+        train_loss_std = np.std(train_loss, axis=0)
+        train_acc_std = np.std(train_acc, axis=0)
+        test_loss_std = np.std(test_loss, axis=0)
+        test_acc_std = np.std(test_acc, axis=0)
+
+        plot_training_history(
+            train_loss_mean,
+            train_acc_mean,
+            test_loss_mean,
+            test_acc_mean,
+            metric=clip_config.ACCURACY,
+            std_dev=True,
+            train_loss_std=train_loss_std,
+            train_acc_std=train_acc_std,
+            test_loss_std=test_loss_std,
+            test_acc_std=test_acc_std,
+        )
+
+    #######################
+    #   RDM RECONSTRUCTION
+    #######################
+    if not clip_config.K_FOLD:  # not supported for K-FOLD
+        predicted_rdm = reconstruct_predicted_rdm(model, embeddings, row_indices, col_indices, device)
+        plot_rdms(rdm, predicted_rdm)
+    else:
+        print("RDM Reconstruction is not implemented for K-Fold mode.")
+
+    #######################
+    #   LAYER SWEEP
+    #######################
+    if clip_config.SWEEP_LAYERS:
+        accuracy_list = []
+        for layer_num in clip_config.LAYERS_LIST:
+            print(f"\nStarting layer sweep for {layer_num} hidden layers.")
+            if not clip_config.K_FOLD:
+                sweep_model = DynamicLayerSizeNeuralNetwork(
+                    hidden_layers=layer_num, activation_func=clip_config.ACTIVATION_FUNC
+                ).to(device)
+
+                sweep_optimizer = optim.Adam(sweep_model.parameters(), lr=clip_config.LEARNING_RATE)
+                sweep_train_loss, sweep_train_acc, sweep_test_loss, sweep_test_acc = train_model(
+                    sweep_model,
+                    train_loader,
+                    test_loader,
+                    criterion,
+                    sweep_optimizer,
+                    device,
+                    num_epochs=clip_config.EPOCHS,
+                    metric=clip_config.ACCURACY,
+                )
+                accuracy_list.append(max(sweep_test_acc))
+                # Optionally save - not implemented for K-FOLD mode
+                # save_path = f"dynamic_model_{layer_num}_layers.pth"  # noqa: ERA001
+                # torch.save(sweep_model.state_dict(), save_path)  # noqa: ERA001
+            else:
+                sweep_train_loss, sweep_train_acc, sweep_test_loss, sweep_test_acc = train_model_kfold(
+                    loaders, criterion, device, num_layers=layer_num, num_epochs=clip_config.EPOCHS
+                )
+                accuracy_list.append(np.mean(sweep_test_acc))
+
+        plot_accuracy_vs_layers(clip_config.LAYERS_LIST, accuracy_list, metric=clip_config.ACCURACY)
 
 
 if __name__ == "__main__":

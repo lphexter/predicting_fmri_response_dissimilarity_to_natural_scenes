@@ -2,12 +2,16 @@ import numpy as np
 import torch
 from scipy.stats import pearsonr, spearmanr
 from sklearn.metrics import r2_score
+from torch import optim
 from torch.utils.data import DataLoader
+
+from project.config.clip_config import ACCURACY, EPOCHS, HIDDEN_LAYERS, LEARNING_RATE
+from project.models.pytorch_models import DynamicLayerSizeNeuralNetwork
 
 from .pytorch_data import PairDataset
 
 
-def compute_accuracy(predictions, targets, metric="r2"):
+def compute_accuracy(predictions, targets, metric=ACCURACY):
     pred_np = predictions.detach().cpu().numpy()
     targ_np = targets.detach().cpu().numpy()
 
@@ -20,77 +24,119 @@ def compute_accuracy(predictions, targets, metric="r2"):
     raise ValueError(f"Unknown accuracy metric: {metric}")  # noqa: TRY003, EM102
 
 
-def train_model(model, train_loader, test_loader, criterion, optimizer, device, num_epochs=10, metric="r2"):  # noqa: PLR0913
-    train_loss_history = []
-    train_acc_history = []
-    test_loss_history = []
-    test_acc_history = []
+def train_epoch(model, train_loader, criterion, optimizer, device):
+    model.train()
+    running_loss = 0.0
+    running_accuracy = 0.0
+    count_samples = 0
 
-    model.to(device)
+    for x_batch, y_batch in train_loader:
+        x_batch = x_batch.to(device)  # noqa: PLW2901
+        y_batch = y_batch.to(device)  # noqa: PLW2901
 
-    for epoch in range(num_epochs):
-        ################
-        #   TRAIN
-        ################
-        model.train()
-        running_train_loss = 0.0
-        running_train_acc = 0.0
-        total_train_samples = 0
+        predictions = model(x_batch).squeeze(1)
+        loss = criterion(predictions, y_batch)
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
 
-        for x_batch, y_batch in train_loader:
+        running_loss += loss.item() * x_batch.size(0)
+        count_samples += x_batch.size(0)
+
+        accuracy_val = compute_accuracy(predictions, y_batch)
+        running_accuracy += accuracy_val * x_batch.size(0)
+
+    epoch_loss = running_loss / count_samples
+    epoch_accuracy = running_accuracy / count_samples
+
+    return epoch_loss, epoch_accuracy
+
+
+def validate_epoch(model, test_loader, criterion, device):
+    model.eval()
+    running_loss = 0.0
+    running_accuracy = 0.0
+    count_samples = 0
+
+    with torch.no_grad():
+        for x_batch, y_batch in test_loader:
             x_batch = x_batch.to(device)  # noqa: PLW2901
             y_batch = y_batch.to(device)  # noqa: PLW2901
+            predictions = model(x_batch).squeeze(1)
+            loss = criterion(predictions, y_batch)
 
-            optimizer.zero_grad()
-            preds = model(x_batch).squeeze(1)
-            loss = criterion(preds, y_batch)
-            loss.backward()
-            optimizer.step()
+            running_loss += loss.item() * x_batch.size(0)
+            count_samples += x_batch.size(0)
 
-            batch_size_ = x_batch.size(0)
-            running_train_loss += loss.item() * batch_size_
-            running_train_acc += compute_accuracy(preds, y_batch, metric) * batch_size_
-            total_train_samples += batch_size_
+            accuracy_val = compute_accuracy(predictions, y_batch)
+            running_accuracy += accuracy_val * x_batch.size(0)
 
-        epoch_train_loss = running_train_loss / total_train_samples
-        epoch_train_acc = running_train_acc / total_train_samples
+    epoch_loss = running_loss / count_samples
+    epoch_accuracy = running_accuracy / count_samples
 
-        ################
-        #   EVAL
-        ################
-        model.eval()
-        running_test_loss = 0.0
-        running_test_acc = 0.0
-        total_test_samples = 0
+    return epoch_loss, epoch_accuracy
 
-        with torch.no_grad():
-            for x_batch, y_batch in test_loader:
-                x_batch = x_batch.to(device)  # noqa: PLW2901
-                y_batch = y_batch.to(device)  # noqa: PLW2901
 
-                preds = model(x_batch).squeeze(1)
-                loss = criterion(preds, y_batch)
+def train_model(model, train_loader, test_loader, criterion, optimizer, device, num_epochs=EPOCHS):  # noqa: PLR0913
+    train_loss_history = []
+    train_accuracy_history = []
+    test_loss_history = []
+    test_accuracy_history = []
 
-                batch_size_ = x_batch.size(0)
-                running_test_loss += loss.item() * batch_size_
-                running_test_acc += compute_accuracy(preds, y_batch, metric) * batch_size_
-                total_test_samples += batch_size_
+    model.to(device)  # Move the model to the specified device
 
-        epoch_test_loss = running_test_loss / total_test_samples
-        epoch_test_acc = running_test_acc / total_test_samples
+    for epoch in range(num_epochs):
+        # Train for one epoch
+        train_loss, train_accuracy = train_epoch(model, train_loader, criterion, optimizer, device)
+        train_loss_history.append(train_loss)
+        train_accuracy_history.append(train_accuracy)
 
-        train_loss_history.append(epoch_train_loss)
-        train_acc_history.append(epoch_train_acc)
-        test_loss_history.append(epoch_test_loss)
-        test_acc_history.append(epoch_test_acc)
+        # Validate for one epoch
+        test_loss, test_accuracy = validate_epoch(model, test_loader, criterion, device)
+        test_loss_history.append(test_loss)
+        test_accuracy_history.append(test_accuracy)
 
         print(
-            f"[Epoch {epoch + 1}/{num_epochs}] "
-            f"Train Loss: {epoch_train_loss:.4f}, {metric}: {epoch_train_acc:.4f} | "
-            f"Test  Loss: {epoch_test_loss:.4f}, {metric}: {epoch_test_acc:.4f}"
+            f"Epoch {epoch + 1}/{num_epochs} "
+            f"Train Loss: {train_loss:.4f} {ACCURACY}: {train_accuracy:.4f} | "
+            f"Test Loss: {test_loss:.4f} {ACCURACY}: {test_accuracy:.4f}"
         )
 
-    return train_loss_history, train_acc_history, test_loss_history, test_acc_history
+    return train_loss_history, train_accuracy_history, test_loss_history, test_accuracy_history
+
+
+def train_model_kfold(loaders, criterion, device, num_layers=HIDDEN_LAYERS, num_epochs=EPOCHS):
+    train_loss_history = []
+    train_accuracy_history = []
+    test_loss_history = []
+    test_accuracy_history = []
+
+    for fold, (train_loader, test_loader) in enumerate(loaders):
+        print(f"Fold {fold + 1}")
+        model = DynamicLayerSizeNeuralNetwork(hidden_layers=num_layers)
+        optimizer = optim.Adam(model.parameters(), lr=LEARNING_RATE)
+        model.to(device)
+
+        for epoch in range(num_epochs):
+            train_loss, train_accuracy = train_epoch(model, train_loader, criterion, optimizer, device)
+            test_loss, test_accuracy = validate_epoch(model, test_loader, criterion, device)
+
+            print(
+                f"Epoch {epoch + 1}/{num_epochs} "
+                f"Train Loss: {train_loss:.4f} {ACCURACY}: {train_accuracy:.4f} | "
+                f"Test Loss: {test_loss:.4f} {ACCURACY}: {test_accuracy:.4f}"
+            )
+
+        # appending the loss/accuracy metrics from the final epoch (assuming they're the best values)
+        train_loss_history.append(train_loss)
+        train_accuracy_history.append(train_accuracy)
+        test_loss_history.append(test_loss)
+        test_accuracy_history.append(test_accuracy)
+
+    avg_test_accuracy = np.mean(test_accuracy_history)
+    print(f"Average {ACCURACY} across folds: {avg_test_accuracy:.4f}")
+
+    return train_loss_history, train_accuracy_history, test_loss_history, test_accuracy_history
 
 
 def reconstruct_predicted_rdm(model, embeddings, row_indices, col_indices, device):
