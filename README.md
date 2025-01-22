@@ -1,5 +1,5 @@
 # biu_python_final_project
-BIU python class final project
+BIU python class final project. Code is primarily run in Google Colab, link here: <INSERT_LINK>
 
 ## Directory structure
 <details>
@@ -12,10 +12,10 @@ biu_python_final_project/
   │   │   ├── config/
   │   │   │   ├── __init__.py
   │   │   │   ├── clip_config.py
-  │   │   │   └── config.py
+  │   │   │   └── dep_config.py
   │   │   ├── models/
   │   │   │   ├── __init__.py
-  │   │   │   ├── models.py
+  │   │   │   ├── dep_models.py
   │   │   │   └── pytorch_models.py
   │   │   ├── utils/
   │   │   │   ├── __init__.py
@@ -24,8 +24,8 @@ biu_python_final_project/
   │   │   │   ├── pytorch_data.py
   │   │   │   ├── pytorch_training.py
   │   │   │   └── visualizations.py
-  │   │   ├── main.py
-  │   │   └── clip_main.py
+  │   │   ├── dep_main.py
+  │   │   └── main.py
 ```
 </details>
 
@@ -48,6 +48,7 @@ pip install -e .[dev]
 1. Download Google Drive for Desktop
 2. Ensure you have added a Shortcut to the algonauts data folder ("algonauts_2023_tutorial_data") to your Drive
 3. Copy the full Shorcut path for use later, e.g. ~/Library/CloudStorage/GoogleDrive-<your_email>/.shortcut-targets-by-id/<shortcut_id>
+#### TODO: Mini shared data folder for others to test the code
 
 ## Running the Models
 

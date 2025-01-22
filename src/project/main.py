@@ -1,6 +1,6 @@
-# clip_main.py
+# main.py
 
-"""clip_main Module
+"""main Module
 
 This module serves as the entry point for running the CLIP model implementation.
 
@@ -31,7 +31,7 @@ from .utils.visualizations import (
 )
 
 
-def main():
+def main():  # noqa: PLR0915
     # Parse command-line arguments
     parser = argparse.ArgumentParser(description="CLIP + PyTorch Pipeline for RDM Modeling")
     parser.add_argument(
@@ -119,7 +119,9 @@ def main():
             loaders, criterion, device, num_layers=clip_config.HIDDEN_LAYERS, num_epochs=clip_config.EPOCHS
         )
 
-    # Plot training curves
+    #######################
+    #    PLOT TRAINING CURVES
+    #######################
     if not clip_config.K_FOLD:
         # Standard training mode plotting
         plot_training_history(train_loss, train_acc, test_loss, test_acc, metric=clip_config.ACCURACY)
