@@ -83,6 +83,8 @@ lint.ignore = [
     "N806",
     "D107", # ignore docstring for __init__
     "D102", # ignore docstring in public method
+    "TID252", # allow relative imports
+    "INP001", # allow implicit packages
 ]
 
 [tool.ruff.lint.per-file-ignores]
