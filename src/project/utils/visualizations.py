@@ -45,6 +45,8 @@ def plot_rdms(true_rdm, predicted_rdm):
 def plot_training_history(train_loss, train_acc, test_loss, test_acc, metric="r2", std_dev=False, **kwargs):  # noqa: PLR0913, ANN003, FBT002
     epochs = range(1, len(train_loss) + 1)
 
+    x_label = "Epoch" if not std_dev else "Fold"
+
     plt.figure(figsize=(12, 5))
 
     # Plot Loss
@@ -61,9 +63,9 @@ def plot_training_history(train_loss, train_acc, test_loss, test_acc, metric="r2
         plt.fill_between(
             epochs, test_loss - kwargs.get("test_loss_std", 0), test_loss + kwargs.get("test_loss_std", 0), alpha=0.2
         )
-    plt.xlabel("Epoch")
+    plt.xlabel(f"{x_label}")
     plt.ylabel("Loss")
-    plt.title("Loss over Epochs")
+    plt.title(f"Loss over {x_label}s")
     plt.legend()
 
     # Plot Accuracy
@@ -77,9 +79,9 @@ def plot_training_history(train_loss, train_acc, test_loss, test_acc, metric="r2
         plt.fill_between(
             epochs, test_acc - kwargs.get("test_acc_std", 0), test_acc + kwargs.get("test_acc_std", 0), alpha=0.2
         )
-    plt.xlabel("Epoch")
+    plt.xlabel(x_label)
     plt.ylabel(metric.capitalize())
-    plt.title(f"{metric.capitalize()} over Epochs")
+    plt.title(f"{metric.capitalize()} over {x_label}s")
     plt.legend()
 
     plt.tight_layout()
@@ -89,9 +91,9 @@ def plot_training_history(train_loss, train_acc, test_loss, test_acc, metric="r2
 def plot_accuracy_vs_layers(hidden_layers_list, accuracy_list, metric="r2"):
     plt.figure(figsize=(8, 6))
     plt.bar(hidden_layers_list, accuracy_list, color="skyblue")
-    plt.xlabel("Number of Layers in MLP")
+    plt.xlabel("Number of Hidden Layers in MLP")
     plt.ylabel(metric)
-    plt.title(f"{metric} vs. Number of Layers")
+    plt.title(f"{metric} vs. Number of Hidden Layers")
     plt.xticks(hidden_layers_list)
     plt.grid(axis="y", linestyle="--", alpha=0.7)
     plt.tight_layout()

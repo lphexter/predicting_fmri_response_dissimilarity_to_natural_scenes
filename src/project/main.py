@@ -9,6 +9,7 @@ Functions:
 """
 
 import argparse
+import logging
 import os
 
 import numpy as np
@@ -17,9 +18,9 @@ from torch import nn, optim
 from torch.utils.data import DataLoader
 
 from .config import clip_config
-from .models.pytorch_models import DynamicLayerSizeNeuralNetwork, NeuralNetwork
-from .utils.clip_utils import get_image_embeddings, load_clip_model
-from .utils.data_utils import create_rdm, prepare_fmri_data
+from .models.pytorch_models import DynamicLayerSizeNeuralNetwork
+from .utils.clip_utils import get_image_embeddings
+from .utils.data_utils import compare_rdms, create_rdm, prepare_fmri_data
 from .utils.pytorch_data import PairDataset, generate_pair_indices, prepare_data_for_kfold, train_test_split_pairs
 from .utils.pytorch_training import reconstruct_predicted_rdm, train_model, train_model_kfold
 from .utils.visualizations import (
@@ -32,6 +33,9 @@ from .utils.visualizations import (
 
 
 def main():  # noqa: PLR0915
+    # initialize logging
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+
     # Parse command-line arguments
     parser = argparse.ArgumentParser(description="CLIP + PyTorch Pipeline for RDM Modeling")
     parser.add_argument(
@@ -49,6 +53,7 @@ def main():  # noqa: PLR0915
         region_class=clip_config.REGION_CLASS,
         root_data_dir=f"{args.root_dir}/{clip_config.ROOT_DATA_DIR}",
     )
+    logging.info("fMRI data shape: %s", fmri_data.shape)
     rdm = create_rdm(fmri_data, metric=clip_config.METRIC)
 
     # Plot subset + distribution
@@ -59,7 +64,6 @@ def main():  # noqa: PLR0915
     #     CLIP EMBEDDINGS
     #######################
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    model_clip, processor_clip = load_clip_model(pretrained_model_name=clip_config.PRETRAINED_MODEL, device=device)
 
     image_dir = os.path.join(
         f"{args.root_dir}/{clip_config.ROOT_DATA_DIR}",
@@ -70,12 +74,10 @@ def main():  # noqa: PLR0915
 
     embeddings = get_image_embeddings(
         image_dir=image_dir,
-        processor=processor_clip,
-        model=model_clip,
         desired_image_number=clip_config.DESIRED_IMAGE_NUMBER,
         device=device,
     )
-    print("Embeddings shape:", embeddings.shape)
+    logging.info("Embeddings shape: %s", embeddings.shape)
 
     row_indices, col_indices, rdm_values = generate_pair_indices(rdm)
     criterion = nn.MSELoss()
@@ -84,6 +86,7 @@ def main():  # noqa: PLR0915
         #######################
         #    DATA PAIRS
         #######################
+        logging.info("Starting standard training (not KFold)")
 
         X_train_indices, X_test_indices, y_train, y_test = train_test_split_pairs(
             row_indices, col_indices, rdm_values, test_size=clip_config.TEST_SIZE
@@ -98,9 +101,9 @@ def main():  # noqa: PLR0915
         #######################
         #   MODEL + TRAIN
         #######################
-        model = NeuralNetwork(hidden_layers=clip_config.HIDDEN_LAYERS, activation_func=clip_config.ACTIVATION_FUNC).to(
-            device
-        )
+        model = DynamicLayerSizeNeuralNetwork(
+            hidden_layers=clip_config.HIDDEN_LAYERS, activation_func=clip_config.ACTIVATION_FUNC
+        ).to(device)
 
         optimizer = optim.Adam(model.parameters(), lr=clip_config.LEARNING_RATE)
         train_loss, train_acc, test_loss, test_acc = train_model(
@@ -114,6 +117,7 @@ def main():  # noqa: PLR0915
         )
 
     else:
+        logging.info("Starting KFold Training")
         loaders = prepare_data_for_kfold(embeddings, rdm, n_splits=clip_config.K_FOLD_SPLITS)
         train_loss, train_acc, test_loss, test_acc = train_model_kfold(
             loaders, criterion, device, num_layers=clip_config.HIDDEN_LAYERS, num_epochs=clip_config.EPOCHS
@@ -121,27 +125,24 @@ def main():  # noqa: PLR0915
 
     #######################
     #    PLOT TRAINING CURVES
+    #       NOTE: for standard KFold, we take in a list - but standard training we input a list over N epochs, vs in KFold, we input a list over N splits
     #######################
     if not clip_config.K_FOLD:
+        logging.info("Standard historical plotting over training course (not KFold)")
         # Standard training mode plotting
         plot_training_history(train_loss, train_acc, test_loss, test_acc, metric=clip_config.ACCURACY)
     else:
-        # K-Fold mode: Calculate mean and std across folds
-        train_loss_mean = np.mean(train_loss, axis=0)
-        train_acc_mean = np.mean(train_acc, axis=0)
-        test_loss_mean = np.mean(test_loss, axis=0)
-        test_acc_mean = np.mean(test_acc, axis=0)
-
+        logging.info("KFold historical plotting over training course with stdev")
         train_loss_std = np.std(train_loss, axis=0)
         train_acc_std = np.std(train_acc, axis=0)
         test_loss_std = np.std(test_loss, axis=0)
         test_acc_std = np.std(test_acc, axis=0)
 
         plot_training_history(
-            train_loss_mean,
-            train_acc_mean,
-            test_loss_mean,
-            test_acc_mean,
+            train_loss,
+            train_acc,
+            test_loss,
+            test_acc,
             metric=clip_config.ACCURACY,
             std_dev=True,
             train_loss_std=train_loss_std,
@@ -150,12 +151,13 @@ def main():  # noqa: PLR0915
             test_acc_std=test_acc_std,
         )
 
-    #######################
-    #   RDM RECONSTRUCTION
-    #######################
+    ##################################
+    #   RDM RECONSTRUCTION OF TEST RDMs
+    ##################################
     if not clip_config.K_FOLD:  # not supported for K-FOLD
         predicted_rdm = reconstruct_predicted_rdm(model, embeddings, row_indices, col_indices, device)
         plot_rdms(rdm, predicted_rdm)
+        compare_rdms(rdm, predicted_rdm)
     else:
         print("RDM Reconstruction is not implemented for K-Fold mode.")
 
@@ -180,7 +182,6 @@ def main():  # noqa: PLR0915
                     sweep_optimizer,
                     device,
                     num_epochs=clip_config.EPOCHS,
-                    metric=clip_config.ACCURACY,
                 )
                 accuracy_list.append(max(sweep_test_acc))
                 # Optionally save - not implemented for K-FOLD mode

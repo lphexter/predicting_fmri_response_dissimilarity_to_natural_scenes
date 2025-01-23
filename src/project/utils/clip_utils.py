@@ -1,3 +1,4 @@
+import logging
 import os
 
 import numpy as np
@@ -5,7 +6,7 @@ import torch
 from PIL import Image
 from transformers import CLIPModel, CLIPProcessor
 
-from project.config.clip_config import LOAD_EMBEDDINGS_FILE
+from ..config.clip_config import LOAD_EMBEDDINGS_FILE, PRETRAINED_MODEL
 
 
 def load_clip_model(pretrained_model_name="openai/clip-vit-base-patch32", device="cpu"):
@@ -14,11 +15,20 @@ def load_clip_model(pretrained_model_name="openai/clip-vit-base-patch32", device
     return model, processor
 
 
-def get_image_embeddings(image_dir, processor, model, desired_image_number=500, device="cpu"):
+def get_image_embeddings(image_dir, desired_image_number=500, device="cpu"):
+    # initialize logging
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+
     if LOAD_EMBEDDINGS_FILE != "":
+        logging.info("Loading embeddings from local file: %s", LOAD_EMBEDDINGS_FILE)
         # Load embeddings from configued file instead of recalculating
         embeddings = torch.from_numpy(np.load(LOAD_EMBEDDINGS_FILE)).to(device)  # Move to device (CPU/GPU) if needed
         return embeddings[:desired_image_number]
+    # load from scratch with CLIP model and provided directory
+    logging.info("Loading embeddings from scratch, from image_dir: %s", image_dir)
+    logging.info("Loading CLIP Model: %s", PRETRAINED_MODEL)
+    model, processor = load_clip_model(pretrained_model_name=PRETRAINED_MODEL, device=device)
+
     image_paths = [
         os.path.join(image_dir, f)
         for f in os.listdir(image_dir)
