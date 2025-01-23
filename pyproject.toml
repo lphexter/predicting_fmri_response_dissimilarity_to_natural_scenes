@@ -1,10 +1,6 @@
-[build-system]
-requires = ["setuptools>=68", "setuptools_scm[toml]>=8"]
-build-backend = "setuptools.build_meta"
-
 [project]
 name = "project"
-requires-python = ">=3.7,<4.0"
+requires-python = ">=3.10,<3.11"
 version = "1.0"
 dependencies = [
     # Add runtime dependencies here
@@ -18,7 +14,6 @@ dev = [
     "ipykernel",
     "project[ds]",
     "project[lint]",
-    "project[build]",
 ]
 ds = [
     "numpy==1.26.4",
@@ -40,10 +35,6 @@ lint = [
     "ruff",
 ]
 
-build = [
-    "build>=1.2.2",
-]
-
 [tool.setuptools]
 package-dir = {"" = "src"}
 
@@ -56,7 +47,7 @@ src = ["src"]
 extend-exclude = [
     "conf.py",
 ]
-target-version = "py311"
+target-version = "py310"
 lint.select = ["ALL"]
 lint.ignore = [
     "COM812",   # Conflicts with the formatter

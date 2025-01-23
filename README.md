@@ -53,8 +53,8 @@ pip install -e .[dev]
 ## Running the Models
 
 ### Configuration files:
-1. config.py --> user configurations for the first model
-2. clip_config.py --> user configurations for the second model; NOTE: "SWEEP" to True means that you will loop over the layers in "LAYERS_LIST" (rather than just the one test layer)
+1. [DEPRECATED] dep_config.py --> user configurations for the first model
+2. clip_config.py --> user configurations for the second model; NOTE: "SWEEP" to True means that you will loop over the layers in "LAYERS_LIST" after it finishes running with the parameterized layer number, HIDDEN_LAYERS
 
 ### First model (Siamese CNN)
 ```bash 
