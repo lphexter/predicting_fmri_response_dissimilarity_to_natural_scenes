@@ -68,17 +68,3 @@ class DynamicLayerSizeNeuralNetwork(nn.Module):
         if self.activation_func == "sigmoid":
             return torch.sigmoid(x) * 2
         return x
-
-
-class LinearOnlyNet(nn.Module):
-    """Simple Linear Regression - no hidden layers (optionally change activation function)"""
-
-    def __init__(self, activation_func="linear"):
-        super().__init__()
-        self.activation_func = activation_func
-        self.linear = nn.Linear(1024, 1)
-
-    def forward(self, x):
-        if self.activation_func == "sigmoid":
-            return torch.sigmoid(self.linear(x)) * 2
-        return self.linear(x)  # no hidden layer, purely linear

@@ -3,7 +3,6 @@
 import argparse
 import os
 
-import numpy as np
 import tensorflow as tf
 from scipy.stats import pearsonr, spearmanr
 from sklearn.metrics import r2_score
@@ -15,6 +14,8 @@ from .models.dep_models import correlation_loss_with_mse, create_cnn_model
 from .utils.data_utils import (
     create_rdm,
     create_rdm_from_vectors,
+    data_generator,
+    prepare_data_for_cnn,
     prepare_fmri_data,
     preprocess_images,
 )
@@ -23,43 +24,6 @@ from .utils.visualizations import (
     plot_rdm_submatrix,
     plot_rdms,
 )
-
-
-def prepare_data_for_cnn(rdm, test_size=0.2):
-    from sklearn.model_selection import train_test_split
-
-    num_images = rdm.shape[0]
-    row_indices, col_indices = np.triu_indices(num_images, k=1)
-    rdm_values = rdm[row_indices, col_indices]
-
-    train_indices, test_indices, y_train, y_test = train_test_split(
-        np.arange(len(rdm_values)), rdm_values, test_size=test_size, random_state=42
-    )
-
-    X_train_indices = (row_indices[train_indices], col_indices[train_indices])
-    X_test_indices = (row_indices[test_indices], col_indices[test_indices])
-    return X_train_indices, X_test_indices, y_train, y_test
-
-
-def data_generator(image_data, pair_indices, y_data, batch_size=32):
-    num_samples = len(y_data)
-    row_indices, col_indices = pair_indices
-
-    while True:
-        for offset in range(0, num_samples, batch_size):
-            end = offset + batch_size
-
-            batch_rows = row_indices[offset:end]
-            batch_cols = col_indices[offset:end]
-            batch_x1 = image_data[batch_rows]
-            batch_x2 = image_data[batch_cols]
-            batch_y = y_data[offset:end]
-
-            # Add channel dimension
-            batch_x1 = batch_x1[..., np.newaxis]
-            batch_x2 = batch_x2[..., np.newaxis]
-
-            yield (batch_x1, batch_x2), batch_y
 
 
 def main():
