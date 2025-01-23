@@ -5,9 +5,8 @@ from sklearn.metrics import r2_score
 from torch import optim
 from torch.utils.data import DataLoader
 
-from project.config.clip_config import ACCURACY, EPOCHS, HIDDEN_LAYERS, LEARNING_RATE
-from project.models.pytorch_models import DynamicLayerSizeNeuralNetwork
-
+from ..config.clip_config import ACCURACY, EPOCHS, HIDDEN_LAYERS, LEARNING_RATE
+from ..models.pytorch_models import DynamicLayerSizeNeuralNetwork
 from .pytorch_data import PairDataset
 
 

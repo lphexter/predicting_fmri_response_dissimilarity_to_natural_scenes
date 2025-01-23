@@ -3,6 +3,7 @@ import os
 import numpy as np
 from PIL import Image
 from scipy.spatial.distance import pdist, squareform
+from scipy.stats import pearsonr, spearmanr
 from sklearn.preprocessing import StandardScaler
 from tqdm import tqdm
 
@@ -37,6 +38,8 @@ def _get_concatenated_roi_data(root_data_dir, subj, roi, lh_fmri, rh_fmri, desir
         roi_class = "floc-words"
     elif roi in ["early", "midventral", "midlateral", "midparietal", "ventral", "lateral", "parietal"]:
         roi_class = "streams"
+    elif roi == "ALL":
+        return np.concatenate((lh_fmri, rh_fmri), axis=1)[:desired_image_number]
     else:
         raise ValueError(f"ROI '{roi}' not recognized in known classes.")  # noqa: TRY003, EM102
 
@@ -161,3 +164,21 @@ def create_rdm_from_vectors(vectors):
                 rdm_out[i, j] = rdm_out[j, i] = vectors[idx]
             idx += 1
     return rdm_out
+
+
+def compare_rdms(raw_rdm, features_rdm):
+    # calculate correlation between features rdm and true rdm
+    # Get the upper triangular part (excluding the diagonal)
+    upper_tri_indices = np.triu_indices(features_rdm.shape[0], k=1)
+
+    # Extract the upper diagonal elements from both RDMs
+    features_upper_tri = features_rdm[upper_tri_indices]
+    rdm_upper_tri = raw_rdm[upper_tri_indices]
+
+    # Now calculate the Pearson correlation
+    corr, _ = pearsonr(features_upper_tri, rdm_upper_tri)
+    print(f"Pearson Correlation between features RDM (upper tri) and true RDM (upper tri): {corr}")
+
+    # Now calculate the Spearman correlation
+    corr, _ = spearmanr(features_upper_tri, rdm_upper_tri)
+    print(f"Spearman Correlation between features RDM (upper tri) and true RDM (upper tri): {corr}")

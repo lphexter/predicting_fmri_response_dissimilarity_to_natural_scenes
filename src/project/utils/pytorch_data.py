@@ -3,8 +3,6 @@ import torch
 from sklearn.model_selection import KFold, train_test_split
 from torch.utils.data import DataLoader, Dataset
 
-from project.config.clip_config import K_FOLD_SPLITS
-
 
 def generate_pair_indices(rdm):
     row_indices, col_indices = np.triu_indices(n=rdm.shape[0], k=1)
@@ -79,9 +77,8 @@ def train_test_split_pairs(row_indices, col_indices, rdm_values, test_size=0.2, 
     return X_train_indices, X_test_indices, y_train, y_test
 
 
-# return data loaders for N folds
-def prepare_data_for_kfold(loaded_features, rdm, n_splits=K_FOLD_SPLITS):
-    """Prepares data for k-fold cross-validation.
+def prepare_data_for_kfold(loaded_features, rdm, n_splits=5):
+    """Prepares data for k-fold cross-validation with non-overlapping pairs.
 
     Args:
         loaded_features (np.ndarray): The image loaded features.
@@ -95,16 +92,38 @@ def prepare_data_for_kfold(loaded_features, rdm, n_splits=K_FOLD_SPLITS):
     # 1. Generate all pairs
     row_indices, col_indices, rdm_values = generate_pair_indices(rdm)
 
-    # 2. Create KFold object
+    # 2. Get all unique image indices
+    all_images = np.unique(np.concatenate([row_indices, col_indices]))
+
+    # 3. Create KFold object for splitting images
     kf = KFold(n_splits=n_splits, shuffle=True, random_state=42)
 
-    # 3. Generate loaders for each fold
+    # 4. Generate loaders for each fold
     loaders = []
-    for train_index, test_index in kf.split(rdm_values):
-        X_train_indices = (row_indices[train_index], col_indices[train_index])
-        X_test_indices = (row_indices[test_index], col_indices[test_index])
-        y_train, y_test = rdm_values[train_index], rdm_values[test_index]
+    for train_images_index, test_images_index in kf.split(all_images):
+        # Get the train and test images
+        train_images = all_images[train_images_index]
+        test_images = all_images[test_images_index]
+        train_set, test_set = set(train_images), set(test_images)
 
+        # Collect indices where both images in the pair are in the train set
+        train_pair_indices = [
+            i
+            for i, (r, c) in enumerate(zip(row_indices, col_indices, strict=False))
+            if r in train_set and c in train_set
+        ]
+        # Collect indices where both images in the pair are in the test set
+        test_pair_indices = [
+            i for i, (r, c) in enumerate(zip(row_indices, col_indices, strict=False)) if r in test_set and c in test_set
+        ]
+
+        # Extract train/test pairs and their RDM values
+        X_train_indices = (row_indices[train_pair_indices], col_indices[train_pair_indices])
+        X_test_indices = (row_indices[test_pair_indices], col_indices[test_pair_indices])
+        y_train = rdm_values[train_pair_indices]
+        y_test = rdm_values[test_pair_indices]
+
+        # Create datasets
         train_dataset = PairDataset(loaded_features, X_train_indices, y_train)
         test_dataset = PairDataset(loaded_features, X_test_indices, y_test)
 

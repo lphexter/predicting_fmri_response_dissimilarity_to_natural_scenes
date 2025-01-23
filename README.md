@@ -58,12 +58,12 @@ pip install -e .[dev]
 
 ### First model (Siamese CNN)
 ```bash 
-python3.10 -m src.project.main --root_dir "/absolute/path/to/Google/Drive/Shortcut"
+python3.10 -m src.project.dep_main --root_dir "/absolute/path/to/Google/Drive/Shortcut"
 ```
 
 ### Second model (simple MLP)
 ```bash 
-python3.10 -m src.project.clip_main --root_dir "/absolute/path/to/Google/Drive/Shortcut"
+python3.10 -m src.project.main --root_dir "/absolute/path/to/Google/Drive/Shortcut"
 ```
 
 ## Modify package dependencies (add/remove/update external modules/packages):
