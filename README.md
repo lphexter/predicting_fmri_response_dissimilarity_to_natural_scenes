@@ -48,8 +48,6 @@ pip install -e .[dev]
 1. Download Google Drive for Desktop [here](https://support.google.com/a/users/answer/13022292?hl=en)
 2. Ensure you have added a [Shortcut](https://support.google.com/drive/answer/9700156?hl=en&co=GENIE.Platform%3DDesktop) from the desired data folder to any folder in your Drive. For the data folder, either setup "algonauts_2023_tutorial_data" per instructions [here](https://docs.google.com/forms/d/e/1FAIpQLSehZkqZOUNk18uTjRTuLj7UYmRGz-OkdsU25AyO3Wm6iAb0VA/viewform?usp=sf_link), or request access to the mini testing data "mini_data_for_python" folder [here](https://drive.google.com/drive/folders/19mXhFsOlFWu2vyPkj5In2VQS-Buu4K48?usp=sharing)
 3. Copy the full Shorcut path for use later, e.g. `~/Library/CloudStorage/GoogleDrive-<your_email>/.shortcut-targets-by-id/<shortcut_id>`
-
-    a. [**RECOMMENDED**] Update `LOAD_EMBEDDINGS` in `clip_config.py` with the proper Shortcut path such that you can use the pre-run embeddings, rather than loading from scratch. (NOT RECOMMENDED - Otherwise, update `LOAD_EMBEDDINGS` TO `""`.)
 4. Ensure your data folder is in "offline mode" locally (Right click the folder, e.g. "mini_data_for_python" > Make available offline).
 
 ## Running the Models
@@ -57,6 +55,8 @@ pip install -e .[dev]
 ### Configuration files:
 1. [DEPRECATED] dep_config.py --> user configurations for the first model
 2. clip_config.py --> user configurations for the second model; NOTE: "SWEEP" to True means that you will loop over the layers in "LAYERS_LIST" after it finishes running with the parameterized layer number, HIDDEN_LAYERS
+
+    a. [**RECOMMENDED**] Update `LOAD_EMBEDDINGS` in `clip_config.py` with the proper Shortcut path such that you can use the pre-run embeddings, rather than loading from scratch. (NOT RECOMMENDED - Otherwise, update `LOAD_EMBEDDINGS` TO `""`.)
 
 ### [DEPRECATED] First model (Siamese CNN)
 ```bash 
