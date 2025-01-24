@@ -45,10 +45,9 @@ pip install -e .[dev]
 ``` 
 
 ### Setup your data folder
-1. Download Google Drive for Desktop
-2. Ensure you have added a Shortcut to the algonauts data folder ("algonauts_2023_tutorial_data") to your Drive
+1. Download Google Drive for Desktop [here](https://support.google.com/a/users/answer/13022292?hl=en)
+2. Ensure you have added a Shortcut from the desired data folder to any folder in your Drive. For the data folder, either setup "algonauts_2023_tutorial_data" per instructions [here](https://docs.google.com/forms/d/e/1FAIpQLSehZkqZOUNk18uTjRTuLj7UYmRGz-OkdsU25AyO3Wm6iAb0VA/viewform?usp=sf_link), or request access to the mini testing data "mini_data_for_python" folder [here](https://drive.google.com/drive/folders/19mXhFsOlFWu2vyPkj5In2VQS-Buu4K48?usp=sharing)
 3. Copy the full Shorcut path for use later, e.g. ~/Library/CloudStorage/GoogleDrive-<your_email>/.shortcut-targets-by-id/<shortcut_id>
-#### TODO: Mini shared data folder for others to test the code
 
 ## Running the Models
 
@@ -56,7 +55,7 @@ pip install -e .[dev]
 1. [DEPRECATED] dep_config.py --> user configurations for the first model
 2. clip_config.py --> user configurations for the second model; NOTE: "SWEEP" to True means that you will loop over the layers in "LAYERS_LIST" after it finishes running with the parameterized layer number, HIDDEN_LAYERS
 
-### First model (Siamese CNN)
+### [DEPRECATED] First model (Siamese CNN)
 ```bash 
 python3.10 -m src.project.dep_main --root_dir "/absolute/path/to/Google/Drive/Shortcut"
 ```
