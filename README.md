@@ -56,7 +56,7 @@ pip install -e .[dev]
 1. [DEPRECATED] dep_config.py --> user configurations for the first model
 2. clip_config.py --> user configurations for the second model; NOTE: "SWEEP" to True means that you will loop over the layers in "LAYERS_LIST" after it finishes running with the parameterized layer number, HIDDEN_LAYERS
 
-    a. [**RECOMMENDED**] Update `LOAD_EMBEDDINGS` in `clip_config.py` with the proper Shortcut path such that you can use the pre-run embeddings, rather than loading from scratch. (NOT RECOMMENDED - Otherwise, update `LOAD_EMBEDDINGS` TO `""`.)
+    a. [**RECOMMENDED**] Update `LOAD_EMBEDDINGS_FILE` in `clip_config.py` with the proper Shortcut path such that you can use the pre-run embeddings, rather than loading from scratch. (NOT RECOMMENDED - Otherwise, update `LOAD_EMBEDDINGS_FILE` TO `""`.)
 
 ### [DEPRECATED] First model (Siamese CNN)
 ```bash 
