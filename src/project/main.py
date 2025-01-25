@@ -41,6 +41,9 @@ def main():  # noqa: PLR0915
     parser.add_argument(
         "--root_dir", type=str, default=clip_config.ROOT_DATA_DIR, help="Path to the root data directory"
     )
+    parser.add_argument(
+        "--thingsvision", action="store_true", help="Enable the thingsvision flag. Defaults to False if not provided."
+    )
     args = parser.parse_args()
 
     #######################
@@ -76,6 +79,7 @@ def main():  # noqa: PLR0915
         image_dir=image_dir,
         desired_image_number=clip_config.DESIRED_IMAGE_NUMBER,
         device=device,
+        is_thingsvision=args.thingsvision,
     )
     logging.info("Embeddings shape: %s", embeddings.shape)
 

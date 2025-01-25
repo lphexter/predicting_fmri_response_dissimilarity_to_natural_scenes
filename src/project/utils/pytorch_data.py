@@ -151,6 +151,11 @@ class PairDataset(Dataset):  # noqa: D101
         col_idx = self.col_indices[idx]
         x1 = self.embeddings[row_idx]
         x2 = self.embeddings[col_idx]
-        x = torch.cat([x1, x2], dim=0)
-        y = torch.tensor(self.y_data[idx], dtype=torch.float32)
-        return x, y
+        # check for nparray - this is a THINGSvision embedding
+        if not isinstance(x1, np.ndarray):
+            x = torch.cat([x1, x2], dim=0)
+            y = torch.tensor(self.y_data[idx], dtype=torch.float32)
+            return x, y
+        x_tensor = torch.cat([torch.tensor(x1, dtype=torch.float32), torch.tensor(x2, dtype=torch.float32)], dim=0)
+        y_tensor = torch.tensor(self.y_data[idx], dtype=torch.float32)
+        return x_tensor, y_tensor
