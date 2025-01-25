@@ -37,6 +37,8 @@ pip install virtualenv
 python3.10 -m venv venv
 # activate virtual environment
 source venv/bin/activate
+# if on Windows
+venv/Scripts/activate
 + (venv) should appear as prefix to all command (run next command just after activating venv)
 # update venv's python package-installer (pip) to its latest version
 pip install --upgrade pip
@@ -56,7 +58,7 @@ pip install -e .[dev]
 1. [DEPRECATED] dep_config.py --> user configurations for the first model
 2. clip_config.py --> user configurations for the second model; NOTE: "SWEEP" to True means that you will loop over the layers in "LAYERS_LIST" after it finishes running with the parameterized layer number, HIDDEN_LAYERS
 
-    a. [**RECOMMENDED**] Update `LOAD_EMBEDDINGS_FILE` in `clip_config.py` with the proper Shortcut path such that you can use the pre-run embeddings, rather than loading from scratch. (NOT RECOMMENDED - Otherwise, update `LOAD_EMBEDDINGS_FILE` TO `""`.)
+    a. [**RECOMMENDED**] Update `LOAD_EMBEDDINGS_FILE` in `clip_config.py` with the proper Shortcut path such that you can use the pre-run embeddings, rather than loading from scratch. If using Windows ensure that the path uses backslashes instead of forwardslashes. (NOT RECOMMENDED - Otherwise, update `LOAD_EMBEDDINGS_FILE` TO `""`.)
 
 ### [DEPRECATED] First model (Siamese CNN)
 ```bash 
