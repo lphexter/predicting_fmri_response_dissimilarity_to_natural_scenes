@@ -69,7 +69,7 @@ python3.10 -m src.project.dep_main --root_dir "/absolute/path/to/Google/Drive/Sh
 ```bash 
 python3.10 -m src.project.main --root_dir "/absolute/path/to/Google/Drive/Shortcut"
 ```
-#### Note - to use THINGSvision features, update the above command with the optional flag `--thingsvision`
+#### Note - to use THINGSvision features, update the above command for the second model with the optional flag `--thingsvision`
 
 ## Modify package dependencies (add/remove/update external modules/packages):
 #### Add new module:
