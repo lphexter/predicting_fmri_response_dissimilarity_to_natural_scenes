@@ -11,7 +11,7 @@ DESIRED_IMAGE_NUMBER = 50
 # CLIP MODEL
 #############################################
 PRETRAINED_MODEL = "openai/clip-vit-base-patch32"
-LOAD_EMBEDDINGS_FILE = "/Users/lindsayhexter/Library/CloudStorage/GoogleDrive-cinnabonswirl123@gmail.com/.shortcut-targets-by-id/19mXhFsOlFWu2vyPkj5In2VQS-Buu4K48/mini_data_for_python/thingsvision_features.npy"
+LOAD_EMBEDDINGS_FILE = "/absolute/path/to/Google/Drive/Shortcut/mini_data_for_python/embeddings_2500_1.npy"
 
 #############################################
 # RDM / TRAIN PARAMS
