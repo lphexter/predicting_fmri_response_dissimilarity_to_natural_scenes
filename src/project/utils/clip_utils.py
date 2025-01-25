@@ -15,14 +15,20 @@ def load_clip_model(pretrained_model_name="openai/clip-vit-base-patch32", device
     return model, processor
 
 
-def get_image_embeddings(image_dir, desired_image_number=500, device="cpu"):
+def get_image_embeddings(image_dir, desired_image_number=500, device="cpu", is_thingsvision=False):
     # initialize logging
     logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
     if LOAD_EMBEDDINGS_FILE != "":
         logging.info("Loading embeddings from local file: %s", LOAD_EMBEDDINGS_FILE)
         # Load embeddings from configued file instead of recalculating
-        embeddings = torch.from_numpy(np.load(LOAD_EMBEDDINGS_FILE)).to(device)  # Move to device (CPU/GPU) if needed
+        if is_thingsvision:  # process thingsvision embeddings with numpy
+            logging.info("Loading THINGSvision")
+            embeddings = np.load(LOAD_EMBEDDINGS_FILE, allow_pickle=True).astype(np.float32)
+        else:
+            embeddings = torch.from_numpy(np.load(LOAD_EMBEDDINGS_FILE)).to(
+                device
+            )  # Move to device (CPU/GPU) if needed
         return embeddings[:desired_image_number]
     # load from scratch with CLIP model and provided directory
     logging.info("Loading embeddings from scratch, from image_dir: %s", image_dir)

@@ -58,7 +58,7 @@ pip install -e .[dev]
 1. [DEPRECATED] dep_config.py --> user configurations for the first model
 2. clip_config.py --> user configurations for the second model; NOTE: "SWEEP" to True means that you will loop over the layers in "LAYERS_LIST" after it finishes running with the parameterized layer number, HIDDEN_LAYERS
 
-    a. [**RECOMMENDED**] Update `LOAD_EMBEDDINGS_FILE` in `clip_config.py` with the proper Shortcut path such that you can use the pre-run embeddings, rather than loading from scratch. If using Windows ensure that the path uses backslashes instead of forwardslashes. (NOT RECOMMENDED - Otherwise, update `LOAD_EMBEDDINGS_FILE` TO `""`.)
+    a. [**RECOMMENDED**] Update `LOAD_EMBEDDINGS_FILE` in `clip_config.py` with the proper Shortcut path such that you can use the pre-run embeddings, rather than loading from scratch. If using Windows ensure that the path uses backslashes instead of forwardslashes. If using THINGSvision features, replace `LOAD_EMBEDDINGS_FILE` with the path to the THINGSvision features instead. (NOT RECOMMENDED - Otherwise, update `LOAD_EMBEDDINGS_FILE` TO `""`.)
 
 ### [DEPRECATED] First model (Siamese CNN)
 ```bash 
@@ -69,6 +69,7 @@ python3.10 -m src.project.dep_main --root_dir "/absolute/path/to/Google/Drive/Sh
 ```bash 
 python3.10 -m src.project.main --root_dir "/absolute/path/to/Google/Drive/Shortcut"
 ```
+#### Note - to use THINGSvision features, update the above command with the optional flag `--thingsvision`
 
 ## Modify package dependencies (add/remove/update external modules/packages):
 #### Add new module:
