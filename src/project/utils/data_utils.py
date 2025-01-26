@@ -7,6 +7,8 @@ from scipy.stats import pearsonr, spearmanr
 from sklearn.preprocessing import StandardScaler
 from tqdm import tqdm
 
+from ..config.clip_config import METRIC
+
 #########################################
 #    fMRI DATA LOADING & ROI HANDLING
 #########################################
@@ -182,6 +184,39 @@ def compare_rdms(raw_rdm, features_rdm):
     # Now calculate the Spearman correlation
     corr, _ = spearmanr(features_upper_tri, rdm_upper_tri)
     print(f"Spearman Correlation between features RDM (upper tri) and true RDM (upper tri): {corr}")
+
+
+def analyze_rdm(rdm, metric=METRIC):
+    all_metrics = {}
+
+    # Get indices of the upper triangular part (excluding diagonal)
+    triu_indices = np.triu_indices_from(rdm, k=1)
+
+    # Extract the upper triangular values
+    upper_tri_values = rdm[triu_indices]
+
+    # 1. Lowest value and corresponding indices
+    lowest_value = np.min(upper_tri_values)
+    lowest_idx = np.where(rdm == lowest_value)
+
+    # 2. Highest value and corresponding indices
+    highest_value = np.max(upper_tri_values)
+    highest_idx = np.where(rdm == highest_value)
+
+    # Convert from 2D matrix indices to image indices
+    lowest_pair = lowest_idx[0]
+    highest_pair = highest_idx[0]
+
+    all_metrics["low"] = {"value": lowest_value, "pair": lowest_pair}
+    all_metrics["high"] = {"value": highest_value, "pair": highest_pair}
+
+    if metric == "correlation":
+        closest_to_1_value = upper_tri_values[np.argmin(np.abs(upper_tri_values - 1))]
+        closest_to_1_idx = np.where(rdm == closest_to_1_value)
+        closest_to_1_pair = closest_to_1_idx[0]
+        all_metrics["closest_to_1"] = {"value": closest_to_1_value, "pair": closest_to_1_pair}
+
+    return all_metrics
 
 
 #############################################
