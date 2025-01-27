@@ -147,7 +147,7 @@ def preprocess_images(image_dir, num_images, new_width, new_height):
 
 
 #########################################
-#     RDM (Representational Dissimilarity)
+#     RDM (Representational Dissimilarity Matrix)
 #########################################
 
 
