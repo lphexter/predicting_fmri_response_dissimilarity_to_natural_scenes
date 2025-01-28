@@ -1,6 +1,7 @@
 # models/models.py
 
 import tensorflow as tf
+import tensorflow_probability as tfp
 from tensorflow import keras
 from tensorflow.keras import layers
 
@@ -39,29 +40,11 @@ def correlation_loss_with_mse(y_true, y_pred, alpha=0.5):
     alpha=1 => correlation-only, alpha=0 => MSE-only.
     """
     # 1) Pearson correlation (negative sign to maximize correlation)
-    x = y_true
-    y = y_pred
-    mx = tf.reduce_mean(x)
-    my = tf.reduce_mean(y)
-    xm = x - mx
-    ym = y - my
-    r_num = tf.reduce_sum(xm * ym)
-    r_den = tf.sqrt(tf.reduce_sum(tf.square(xm)) * tf.reduce_sum(tf.square(ym)) + 1e-8)
-    r = r_num / r_den
-    r = tf.clip_by_value(r, -1.0, 1.0)
-    correlation_loss_val = -r
-
-    # What about this:
-    # import tensorflow_probability as tfp
-    # r = tfp.stats.correlation(x, y, sample_axis=0, event_axis=None)
-    # correlation_loss_val = -r  # Negative sign to maximize correlation
+    r = tfp.stats.correlation(y_true, y_pred, sample_axis=0, event_axis=None)
+    correlation_loss_val = -r  # Negative sign to maximize correlation
 
     # 2) MSE
-    mse_loss_val = tf.reduce_mean(tf.square(x - y))
-
-    # Same here, even though this is longer
-    # mse_loss = tf.keras.losses.MeanSquaredError()
-    # mse_loss_val = mse_loss(x, y)
+    mse_loss_val = tf.reduce_mean(tf.square(y_true - y_pred))
 
     # 3) Weighted sum
     return alpha * correlation_loss_val + (1 - alpha) * mse_loss_val  # the loss
