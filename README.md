@@ -1,5 +1,5 @@
 # biu_python_final_project
-BIU python class final project. Code is primarily run in Google Colab, link here: <INSERT_LINK>
+BIU python class final project. Full dataset results are run via various Google Colab workbooks (impossible to run with the full dataset on a local machine), but this repo has all corresponding code split out into organized files (per `Directory structure` detailed below). Details on how to run this code locally with a small subset of data are noted here as well.
 
 ## Directory structure
 <details>
