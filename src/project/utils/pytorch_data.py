@@ -5,6 +5,17 @@ from torch.utils.data import DataLoader, Dataset
 
 
 def generate_pair_indices(rdm):
+    """Generates row_indices, col_indices for all unique pairs (i,j) where i < j,
+    along with their corresponding RDM values.
+
+    Args:
+        rdm (np.ndarray): A 2D RDM matrix of shape (N, N).
+
+    Returns:
+        row_indices (np.ndarray): 1D array of row indices for each pair.
+        col_indices (np.ndarray): 1D array of column indices for each pair.
+        rdm_values (np.ndarray):  1D array of the RDM values for each (row, col) pair.
+    """  # noqa: D205
     row_indices, col_indices = np.triu_indices(n=rdm.shape[0], k=1)
     rdm_values = rdm[row_indices, col_indices]
     return row_indices, col_indices, rdm_values
