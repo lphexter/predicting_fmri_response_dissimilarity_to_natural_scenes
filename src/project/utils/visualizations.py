@@ -28,6 +28,25 @@ def plot_rdm_distribution(rdm, bins=30, exclude_diagonal=True):  # noqa: FBT002
     plt.show()
 
 
+def show_image_pair(idx1, idx2, image_list, title):
+    # Create a figure with two subplots
+    fig, axes = plt.subplots(1, 2, figsize=(10, 5))  # 1 row, 2 columns
+
+    # Display the first image in the first subplot
+    axes[0].imshow(image_list[idx1])
+    axes[0].set_title("Image 1")  # Optional: Add a title
+
+    # Display the second image in the second subplot
+    axes[1].imshow(image_list[idx2])
+    axes[1].set_title("Image 2")  # Optional: Add a title
+
+    # Subtitle
+    fig.suptitle(title)
+
+    # Show the plot
+    plt.show()
+
+
 def plot_rdms(true_rdm, predicted_rdm):
     fig, axes = plt.subplots(1, 2, figsize=(10, 5))
     im0 = axes[0].imshow(true_rdm, cmap="viridis", origin="upper")

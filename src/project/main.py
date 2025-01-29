@@ -19,7 +19,7 @@ from torch.utils.data import DataLoader
 
 from .config import clip_config
 from .models.pytorch_models import DynamicLayerSizeNeuralNetwork
-from .utils.clip_utils import get_image_embeddings
+from .utils.clip_utils import get_image_embeddings, load_images
 from .utils.data_utils import analyze_rdm, compare_rdms, create_rdm, prepare_fmri_data
 from .utils.pytorch_data import PairDataset, generate_pair_indices, prepare_data_for_kfold, train_test_split_pairs
 from .utils.pytorch_training import reconstruct_predicted_rdm, train_model, train_model_kfold
@@ -29,6 +29,7 @@ from .utils.visualizations import (
     plot_rdm_submatrix,
     plot_rdms,
     plot_training_history,
+    show_image_pair,
 )
 
 
@@ -64,12 +65,6 @@ def main():  # noqa: PLR0915
     plot_rdm_distribution(rdm, bins=30, exclude_diagonal=True)
 
     #######################
-    #     RDM HIGHEST/LOWEST/CLOSEST_TO_1 VALUES
-    #######################
-    results = analyze_rdm(rdm, clip_config.METRIC)
-    logging.info("RDM Value Analysis Results: %s", results)
-
-    #######################
     #     CLIP EMBEDDINGS
     #######################
     device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -80,14 +75,28 @@ def main():  # noqa: PLR0915
         "training_split",
         "training_images",
     )
-
+    images = load_images(image_dir=image_dir, desired_image_number=clip_config.DESIRED_IMAGE_NUMBER)
     embeddings = get_image_embeddings(
-        image_dir=image_dir,
+        images=images,
         desired_image_number=clip_config.DESIRED_IMAGE_NUMBER,
         device=device,
         is_thingsvision=args.thingsvision,
     )
     logging.info("Embeddings shape: %s", embeddings.shape)
+
+    #######################
+    #     RDM HIGHEST/LOWEST/CLOSEST_TO_1 VALUES
+    #######################
+
+    results = analyze_rdm(rdm, clip_config.METRIC)
+    logging.info("RDM Value Analysis Results: %s", results)
+
+    for key in results:
+        title = f"Pair images of {key} value with score {results[key]['value']}"
+        image_pair = results[key]["pair"]
+        show_image_pair(image_pair[0], image_pair[1], images, title)
+
+    #######################
 
     row_indices, col_indices, rdm_values = generate_pair_indices(rdm)
     criterion = nn.MSELoss()
