@@ -20,7 +20,7 @@ from torch.utils.data import DataLoader
 from .config import clip_config
 from .models.pytorch_models import DynamicLayerSizeNeuralNetwork
 from .utils.clip_utils import get_image_embeddings
-from .utils.data_utils import compare_rdms, create_rdm, prepare_fmri_data
+from .utils.data_utils import analyze_rdm, compare_rdms, create_rdm, prepare_fmri_data
 from .utils.pytorch_data import PairDataset, generate_pair_indices, prepare_data_for_kfold, train_test_split_pairs
 from .utils.pytorch_training import reconstruct_predicted_rdm, train_model, train_model_kfold
 from .utils.visualizations import (
@@ -85,6 +85,13 @@ def main():  # noqa: PLR0915
 
     row_indices, col_indices, rdm_values = generate_pair_indices(rdm)
     criterion = nn.MSELoss()
+
+    #######################
+    #     RDM HIGHEST/LOWEST/CLOSEST_TO_1 VALUES
+    #######################
+    results = analyze_rdm(rdm, clip_config.METRIC)
+    for key, value in results.items():
+        print(key, value)
 
     if not clip_config.K_FOLD:  # standard training
         #######################
