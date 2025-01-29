@@ -12,8 +12,6 @@ def generate_pair_indices(rdm):
 
 #### DEPRECATED - THIS FUNCTION CREATES OVERLAPPING PAIRS IN TRAIN/TEST DATASETS
 def dep_train_test_split_pairs(row_indices, col_indices, rdm_values, test_size=0.2, random_state=42):
-    from sklearn.model_selection import train_test_split
-
     all_pair_indices = np.arange(len(rdm_values))
 
     train_idx, test_idx, y_train, y_test = train_test_split(
