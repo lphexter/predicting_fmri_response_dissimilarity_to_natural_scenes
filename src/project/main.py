@@ -64,6 +64,12 @@ def main():  # noqa: PLR0915
     plot_rdm_distribution(rdm, bins=30, exclude_diagonal=True)
 
     #######################
+    #     RDM HIGHEST/LOWEST/CLOSEST_TO_1 VALUES
+    #######################
+    results = analyze_rdm(rdm, clip_config.METRIC)
+    logging.info("RDM Value Analysis Results: %s", results)
+
+    #######################
     #     CLIP EMBEDDINGS
     #######################
     device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -85,13 +91,6 @@ def main():  # noqa: PLR0915
 
     row_indices, col_indices, rdm_values = generate_pair_indices(rdm)
     criterion = nn.MSELoss()
-
-    #######################
-    #     RDM HIGHEST/LOWEST/CLOSEST_TO_1 VALUES
-    #######################
-    results = analyze_rdm(rdm, clip_config.METRIC)
-    for key, value in results.items():
-        print(key, value)
 
     if not clip_config.K_FOLD:  # standard training
         #######################
@@ -170,7 +169,7 @@ def main():  # noqa: PLR0915
         plot_rdms(rdm, predicted_rdm)
         compare_rdms(rdm, predicted_rdm)
     else:
-        print("RDM Reconstruction is not implemented for K-Fold mode.")
+        logging.info("RDM Reconstruction is not implemented for K-Fold mode.")
 
     #######################
     #   LAYER SWEEP
@@ -178,7 +177,7 @@ def main():  # noqa: PLR0915
     if clip_config.SWEEP_LAYERS:
         accuracy_list = []
         for layer_num in clip_config.LAYERS_LIST:
-            print(f"\nStarting layer sweep for {layer_num} hidden layers.")
+            logging.info("\nStarting layer sweep for %s hidden layers.", layer_num)
             if not clip_config.K_FOLD:
                 sweep_model = DynamicLayerSizeNeuralNetwork(
                     hidden_layers=layer_num, activation_func=clip_config.ACTIVATION_FUNC

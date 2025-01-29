@@ -125,28 +125,6 @@ def prepare_fmri_data(subj, desired_image_number, roi, region_class, root_data_d
 
 
 #########################################
-#     IMAGE PREPROCESSING
-#########################################
-
-
-def preprocess_images(image_dir, num_images, new_width, new_height):
-    def min_max_norm(X):  # noqa: N803
-        X = np.array(X, dtype=np.float32)
-        return (X - X.min()) / (X.max() - X.min() + 1e-8)
-
-    image_files = sorted(f for f in os.listdir(image_dir) if os.path.isfile(os.path.join(image_dir, f)))  # noqa: PTH113
-    image_data = []
-
-    for image_file in tqdm(image_files[:num_images], desc="Resizing images"):
-        image_path = os.path.join(image_dir, image_file)
-        img = Image.open(image_path).convert("L")
-        img = img.resize((new_width, new_height))
-        image_data.append(np.array(img, dtype=np.float32))
-
-    return min_max_norm(image_data)
-
-
-#########################################
 #     RDM (Representational Dissimilarity Matrix)
 #########################################
 
@@ -222,6 +200,24 @@ def analyze_rdm(rdm, metric=METRIC):
 #############################################
 #     DATA PREP FUNCTIONS FOR DEPRECATED MODEL
 #############################################
+
+
+# Image preprocessing
+def preprocess_images(image_dir, num_images, new_width, new_height):
+    def min_max_norm(X):  # noqa: N803
+        X = np.array(X, dtype=np.float32)
+        return (X - X.min()) / (X.max() - X.min() + 1e-8)
+
+    image_files = sorted(f for f in os.listdir(image_dir) if os.path.isfile(os.path.join(image_dir, f)))  # noqa: PTH113
+    image_data = []
+
+    for image_file in tqdm(image_files[:num_images], desc="Resizing images"):
+        image_path = os.path.join(image_dir, image_file)
+        img = Image.open(image_path).convert("L")
+        img = img.resize((new_width, new_height))
+        image_data.append(np.array(img, dtype=np.float32))
+
+    return min_max_norm(image_data)
 
 
 def prepare_data_for_cnn(rdm, test_size=0.2):
