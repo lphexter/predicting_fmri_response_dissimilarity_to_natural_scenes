@@ -15,7 +15,7 @@ def load_clip_model(pretrained_model_name="openai/clip-vit-base-patch32", device
     return model, processor
 
 
-def get_image_embeddings(image_dir, desired_image_number=500, device="cpu", is_thingsvision=False):
+def get_image_embeddings(images, desired_image_number=500, device="cpu", is_thingsvision=False):  # noqa: FBT002
     # initialize logging
     logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
@@ -31,10 +31,19 @@ def get_image_embeddings(image_dir, desired_image_number=500, device="cpu", is_t
             )  # Move to device (CPU/GPU) if needed
         return embeddings[:desired_image_number]
     # load from scratch with CLIP model and provided directory
-    logging.info("Loading embeddings from scratch, from image_dir: %s", image_dir)
+    logging.info("Loading embeddings from scratch")
     logging.info("Loading CLIP Model: %s", PRETRAINED_MODEL)
     model, processor = load_clip_model(pretrained_model_name=PRETRAINED_MODEL, device=device)
 
+    inputs = processor(images=images, return_tensors="pt", padding=True).to(device)
+
+    with torch.no_grad():
+        image_features = model.get_image_features(**inputs)
+        return image_features / image_features.norm(p=2, dim=-1, keepdim=True)
+
+
+# Load images from directory
+def load_images(image_dir, desired_image_number=500):
     image_paths = [
         os.path.join(image_dir, f)
         for f in os.listdir(image_dir)
@@ -42,10 +51,4 @@ def get_image_embeddings(image_dir, desired_image_number=500, device="cpu", is_t
     ]
     image_paths.sort()
     image_paths = image_paths[:desired_image_number]
-
-    images = [Image.open(path).convert("RGB") for path in image_paths]
-    inputs = processor(images=images, return_tensors="pt", padding=True).to(device)
-
-    with torch.no_grad():
-        image_features = model.get_image_features(**inputs)
-        return image_features / image_features.norm(p=2, dim=-1, keepdim=True)
+    return [Image.open(path).convert("RGB") for path in image_paths]
