@@ -21,7 +21,7 @@ def get_image_embeddings(images, desired_image_number=500, device="cpu", is_thin
 
     if LOAD_EMBEDDINGS_FILE != "":
         logging.info("Loading embeddings from local file: %s", LOAD_EMBEDDINGS_FILE)
-        # Load embeddings from configued file instead of recalculating
+        # Load embeddings from configured file instead of recalculating
         if is_thingsvision:  # process thingsvision embeddings with numpy
             logging.info("Loading THINGSvision")
             embeddings = np.load(LOAD_EMBEDDINGS_FILE, allow_pickle=True).astype(np.float32)
