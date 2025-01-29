@@ -5,6 +5,17 @@ from torch.utils.data import DataLoader, Dataset
 
 
 def generate_pair_indices(rdm):
+    """Generates row_indices, col_indices for all unique pairs (i,j) where i < j,
+    along with their corresponding RDM values.
+
+    Args:
+        rdm (np.ndarray): A 2D RDM matrix of shape (N, N).
+
+    Returns:
+        row_indices (np.ndarray): 1D array of row indices for each pair.
+        col_indices (np.ndarray): 1D array of column indices for each pair.
+        rdm_values (np.ndarray):  1D array of the RDM values for each (row, col) pair.
+    """  # noqa: D205
     row_indices, col_indices = np.triu_indices(n=rdm.shape[0], k=1)
     rdm_values = rdm[row_indices, col_indices]
     return row_indices, col_indices, rdm_values
@@ -43,8 +54,8 @@ def train_test_split_pairs(row_indices, col_indices, rdm_values, test_size=0.2, 
         y_train (np.ndarray):    RDM values for the train pairs.
         y_test (np.ndarray):     RDM values for the test pairs.
     """  # noqa: D205
-    # 1. Get all unique image indices
-    all_images = np.unique(np.concatenate([row_indices, col_indices]))
+    # 1. all image indices
+    all_images = np.arange(len(row_indices))
 
     # 2. Split those images into train/test
     train_images, test_images = train_test_split(all_images, test_size=test_size, random_state=random_state)
@@ -75,28 +86,27 @@ def train_test_split_pairs(row_indices, col_indices, rdm_values, test_size=0.2, 
     return X_train_indices, X_test_indices, y_train, y_test
 
 
-def prepare_data_for_kfold(loaded_features, rdm, n_splits=5):
+def prepare_data_for_kfold(row_indices, col_indices, rdm_values, loaded_features, n_splits=5):
     """Prepares data for k-fold cross-validation with non-overlapping pairs.
 
     Args:
+        row_indices (np.ndarray): 1D array of row indices for each pair.
+        col_indices (np.ndarray): 1D array of column indices for each pair.
+        rdm_values (np.ndarray):  1D array of RDM values for each pair.
         loaded_features (np.ndarray): The image loaded features.
-        rdm (np.ndarray):        The representational dissimilarity matrix (RDM).
         n_splits (int):          Number of folds for cross-validation (default=5).
         is_torch (bool):         Whether to convert arrays to torch tensors (default=True).
 
     Returns:
         A list of (train_loader, test_loader) tuples for each fold.
     """
-    # 1. Generate all pairs
-    row_indices, col_indices, rdm_values = generate_pair_indices(rdm)
+    # 1. all image indices
+    all_images = np.arange(len(row_indices))
 
-    # 2. Get all unique image indices
-    all_images = np.unique(np.concatenate([row_indices, col_indices]))
-
-    # 3. Create KFold object for splitting images
+    # 2. Create KFold object for splitting images
     kf = KFold(n_splits=n_splits, shuffle=True, random_state=42)
 
-    # 4. Generate loaders for each fold
+    # 3. Generate loaders for each fold
     loaders = []
     for train_images_index, test_images_index in kf.split(all_images):
         # Get the train and test images

@@ -137,9 +137,15 @@ def main():  # noqa: PLR0915
 
     else:
         logging.info("Starting KFold Training")
-        loaders = prepare_data_for_kfold(embeddings, rdm, n_splits=clip_config.K_FOLD_SPLITS)
+        loaders = prepare_data_for_kfold(
+            row_indices, col_indices, rdm_values, embeddings, n_splits=clip_config.K_FOLD_SPLITS
+        )
         train_loss, train_acc, test_loss, test_acc = train_model_kfold(
-            loaders, criterion, device, num_layers=clip_config.HIDDEN_LAYERS, num_epochs=clip_config.EPOCHS
+            loaders,
+            criterion,
+            device,
+            num_layers=clip_config.HIDDEN_LAYERS,
+            num_epochs=clip_config.EPOCHS,
         )
 
     #######################
