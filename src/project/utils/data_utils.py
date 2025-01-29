@@ -15,19 +15,50 @@ from ..config.clip_config import METRIC
 
 
 def _get_fmri_voxels(root_data_dir, subj, roi, hemisphere, roi_class):
+    """Gets indices for fMRI voxels for a specified brain ROI and hemisphere.
+
+    Args:
+        root_data_dir: Root directory of the data.
+        subj: Subject number.
+        roi: Region of interest (e.g., 'V1v').
+        hemisphere: Hemisphere ('lh' or 'rh').
+        roi_class: ROI class (e.g., 'prf-visualrois').
+
+    Returns:
+        Mask array for fMRI data of the specified ROI and hemisphere.
+    """
     challenge_roi_class_dir = os.path.join(
         root_data_dir, f"subj0{subj}", "roi_masks", hemisphere[0] + "h." + roi_class + "_challenge_space.npy"
     )
     roi_map_dir = os.path.join(root_data_dir, f"subj0{subj}", "roi_masks", "mapping_" + roi_class + ".npy")
 
+    # load the challenge space data- an array representing the brain with each element corresponding to a voxel and labeled with its ROI class
     challenge_roi_class = np.load(challenge_roi_class_dir)
+    # load the ROI mapping dictionary (so we can translate human-readable ROI names to numerical indices)
     roi_map = np.load(roi_map_dir, allow_pickle=True).item()
 
+    #  use roi_map dictionary to find the numerical index associated with the input roi (e.g., 'V1v').
     roi_mapping = list(roi_map.keys())[list(roi_map.values()).index(roi)]
-    return np.asarray(challenge_roi_class == roi_mapping, dtype=int)  # challenge_roi
+    # compare the challenge_roi_class data (the brain array) with the roi_mapping (the numerical index of our target ROI)
+    # where they match, the mask is set to 1 (true), indicating the voxel belongs to the ROI, otherwise, it's set to 0 (false)
+    # return the mask array
+    return np.asarray(challenge_roi_class == roi_mapping, dtype=int)
 
 
 def _get_concatenated_roi_data(root_data_dir, subj, roi, lh_fmri, rh_fmri, desired_image_number):  # noqa: PLR0913
+    """Gets the concatenated fMRI data for a specified ROI from both hemispheres.
+
+    Args:
+        root_data_dir (str): Root data directory
+        subj (str): Subject number (1-8)
+        roi (str): Region of interest (e.g., 'V1v').
+        lh_fmri (np.ndarray): Left hemisphere fMRI data.
+        rh_fmri (np.ndarray): Right hemisphere fMRI data.
+        desired_image_number (int): Data for how many images the user wants
+
+    Returns:
+        np.ndarray: Concatenated fMRI data for the specified ROI.
+    """
     if roi in ["V1v", "V1d", "V2v", "V2d", "V3v", "V3d", "hV4"]:
         roi_class = "prf-visualrois"
     elif roi in ["EBA", "FBA-1", "FBA-2", "mTL-bodies"]:
@@ -129,41 +160,7 @@ def prepare_fmri_data(subj, desired_image_number, roi, region_class, root_data_d
 #########################################
 
 
-def create_rdm(roi_data, metric="correlation"):
-    distances = pdist(roi_data, metric=metric)
-    return squareform(distances)
-
-
-def create_rdm_from_vectors(vectors):
-    num_images = int(np.sqrt(len(vectors) * 2)) + 1
-    rdm_out = np.zeros((num_images, num_images))
-    idx = 0
-    for i in range(num_images):
-        for j in range(i + 1, num_images):
-            if idx < len(vectors):
-                rdm_out[i, j] = rdm_out[j, i] = vectors[idx]
-            idx += 1
-    return rdm_out
-
-
-def compare_rdms(raw_rdm, features_rdm):
-    # calculate correlation between features rdm and true rdm
-    # Get the upper triangular part (excluding the diagonal)
-    upper_tri_indices = np.triu_indices(features_rdm.shape[0], k=1)
-
-    # Extract the upper diagonal elements from both RDMs
-    features_upper_tri = features_rdm[upper_tri_indices]
-    rdm_upper_tri = raw_rdm[upper_tri_indices]
-
-    # Now calculate the Pearson correlation
-    corr, _ = pearsonr(features_upper_tri, rdm_upper_tri)
-    print(f"Pearson Correlation between features RDM (upper tri) and true RDM (upper tri): {corr}")
-
-    # Now calculate the Spearman correlation
-    corr, _ = spearmanr(features_upper_tri, rdm_upper_tri)
-    print(f"Spearman Correlation between features RDM (upper tri) and true RDM (upper tri): {corr}")
-
-
+# return high, low, and closest to 1 values of the RDM along with their pairs
 def analyze_rdm(rdm, metric=METRIC):
     all_metrics = {}
 
@@ -195,6 +192,29 @@ def analyze_rdm(rdm, metric=METRIC):
         all_metrics["closest_to_1"] = {"value": closest_to_1_value, "pair": closest_to_1_pair}
 
     return all_metrics
+
+
+def compare_rdms(raw_rdm, features_rdm):
+    # calculate correlation between features rdm and true rdm
+    # Get the upper triangular part (excluding the diagonal)
+    upper_tri_indices = np.triu_indices(features_rdm.shape[0], k=1)
+
+    # Extract the upper diagonal elements from both RDMs
+    features_upper_tri = features_rdm[upper_tri_indices]
+    rdm_upper_tri = raw_rdm[upper_tri_indices]
+
+    # Now calculate the Pearson correlation
+    corr, _ = pearsonr(features_upper_tri, rdm_upper_tri)
+    print(f"Pearson Correlation between features RDM (upper tri) and true RDM (upper tri): {corr}")
+
+    # Now calculate the Spearman correlation
+    corr, _ = spearmanr(features_upper_tri, rdm_upper_tri)
+    print(f"Spearman Correlation between features RDM (upper tri) and true RDM (upper tri): {corr}")
+
+
+def create_rdm(roi_data, metric="correlation"):
+    distances = pdist(roi_data, metric=metric)
+    return squareform(distances)
 
 
 #############################################
@@ -255,3 +275,16 @@ def data_generator(image_data, pair_indices, y_data, batch_size=32):
             batch_x2 = batch_x2[..., np.newaxis]
 
             yield (batch_x1, batch_x2), batch_y
+
+
+# Create an RDM from a row vector of predictions for visualization/analysis
+def create_rdm_from_vectors(vectors):
+    num_images = int(np.sqrt(len(vectors) * 2)) + 1
+    rdm_out = np.zeros((num_images, num_images))
+    idx = 0
+    for i in range(num_images):
+        for j in range(i + 1, num_images):
+            if idx < len(vectors):
+                rdm_out[i, j] = rdm_out[j, i] = vectors[idx]
+            idx += 1
+    return rdm_out
