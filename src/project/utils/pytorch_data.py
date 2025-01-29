@@ -54,8 +54,8 @@ def train_test_split_pairs(row_indices, col_indices, rdm_values, test_size=0.2, 
         y_train (np.ndarray):    RDM values for the train pairs.
         y_test (np.ndarray):     RDM values for the test pairs.
     """  # noqa: D205
-    # 1. Get all unique image indices
-    all_images = np.unique(np.concatenate([row_indices, col_indices]))
+    # 1. all image indices
+    all_images = np.arange(len(row_indices))
 
     # 2. Split those images into train/test
     train_images, test_images = train_test_split(all_images, test_size=test_size, random_state=random_state)
@@ -100,8 +100,8 @@ def prepare_data_for_kfold(row_indices, col_indices, rdm_values, loaded_features
     Returns:
         A list of (train_loader, test_loader) tuples for each fold.
     """
-    # 1. Get all unique image indices
-    all_images = np.unique(np.concatenate([row_indices, col_indices]))
+    # 1. all image indices
+    all_images = np.arange(len(row_indices))
 
     # 2. Create KFold object for splitting images
     kf = KFold(n_splits=n_splits, shuffle=True, random_state=42)
