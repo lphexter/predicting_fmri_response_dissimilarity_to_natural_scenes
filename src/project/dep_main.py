@@ -141,7 +141,7 @@ def main():
         r2_val = r2_score(y_test, y_pred)
         print(f"R^2 Score: {r2_val}")
     else:
-        raise ValueError(f"Invalid accuracy metric: {dep_config.ACCURACY}")  # noqa: TRY003, EM102
+        raise ValueError(f"Invalid accuracy metric: {dep_config.ACCURACY}")
 
     # Print all three, for reference
     corr_sp, _ = spearmanr(y_pred, y_test)

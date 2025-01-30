@@ -13,8 +13,10 @@ if not logger.handlers:
     # File Handler - Logs Everything
     file_handler = logging.FileHandler("main.log")
     file_handler.setLevel(logging.INFO)
-    file_handler.setFormatter(logging.Formatter("%(asctime)s - %(filename)s - %(funcName)s - %(levelname)s - %(message)s"))
-    
+    file_handler.setFormatter(
+        logging.Formatter("%(asctime)s - %(filename)s - %(funcName)s - %(levelname)s - %(message)s")
+    )
+
     # Stream Handler - Logs Only Warnings and Errors
     stream_handler = logging.StreamHandler()
     stream_handler.setLevel(logging.WARNING)

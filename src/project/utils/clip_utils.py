@@ -1,4 +1,3 @@
-from ...project.logger import logger
 import os
 import sys
 
@@ -7,6 +6,7 @@ import torch
 from PIL import Image
 from transformers import CLIPModel, CLIPProcessor
 
+from ...project.logger import logger
 from ..config import clip_config
 
 
@@ -16,7 +16,12 @@ def load_clip_model(pretrained_model_name="openai/clip-vit-base-patch32", device
     return model, processor
 
 
-def get_image_embeddings(images, desired_image_number=clip_config.DESIRED_IMAGE_NUMBER, device="cpu", is_thingsvision=False):  # noqa: FBT002
+def get_image_embeddings(
+    images,
+    desired_image_number=clip_config.DESIRED_IMAGE_NUMBER,
+    device="cpu",
+    is_thingsvision=False,  # noqa: FBT002
+):
     try:
         # load embeddings from a file, not from scratch
         if clip_config.LOAD_EMBEDDINGS_FILE != "":
@@ -27,7 +32,9 @@ def get_image_embeddings(images, desired_image_number=clip_config.DESIRED_IMAGE_
                 embeddings = np.load(clip_config.LOAD_EMBEDDINGS_FILE, allow_pickle=True).astype(np.float32)
             else:
                 embeddings = np.load(clip_config.LOAD_EMBEDDINGS_FILE)
-            embeddings = torch.from_numpy(embeddings).to(device)[:desired_image_number] # Move to device (CPU/GPU) if needed
+            embeddings = torch.from_numpy(embeddings).to(device)[
+                :desired_image_number
+            ]  # Move to device (CPU/GPU) if needed
 
         else:
             # load from scratch with CLIP model and provided directory
@@ -43,15 +50,16 @@ def get_image_embeddings(images, desired_image_number=clip_config.DESIRED_IMAGE_
         # if our embeddings don't process correctly, raise an error and exit
         if embeddings is None or not isinstance(embeddings, torch.Tensor):
             raise ValueError("Failed to generate embeddings.")
-    
+
     # catch if load embeddings file isn't correct, ValueError as specified above
     except (FileNotFoundError, ValueError) as e:
         logger.error("Error loading CLIP embeddings: %s", e)
         sys.exit(1)
-    
+
     # log the shape and return the scratch-made embeddings
     logger.info("Embeddings shape: %s", embeddings.shape)
     return embeddings
+
 
 # Load images from directory
 def load_images(root_dir, desired_image_number=clip_config.DESIRED_IMAGE_NUMBER):
@@ -62,7 +70,7 @@ def load_images(root_dir, desired_image_number=clip_config.DESIRED_IMAGE_NUMBER)
             "training_split",
             "training_images",
         )
-        if not os.path.exists(image_dir):
+        if not os.path.exists(image_dir):  # noqa: PTH110
             raise FileNotFoundError(f"Image directory does not exist: {image_dir}")
         image_paths = [
             os.path.join(image_dir, f)

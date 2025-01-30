@@ -15,23 +15,16 @@ import sys
 import numpy as np
 import torch
 
+from ..project.logger import logger
 from .config import clip_config
-from .models.pytorch_models import DynamicLayerSizeNeuralNetwork
 from .utils.clip_utils import get_image_embeddings, load_images
 from .utils.data_utils import analyze_rdm, create_rdm, prepare_fmri_data
-from .utils.pytorch_data import PairDataset, generate_pair_indices
+from .utils.pytorch_data import generate_pair_indices
 from .utils.pytorch_training import train_all
-from .utils.visualizations import (
-    plot_accuracy_vs_layers,
-    plot_rdm_distribution,
-    plot_rdm_submatrix,
-    all_plots
-)
-from ..project.logger import logger
+from .utils.visualizations import all_plots, plot_accuracy_vs_layers, plot_rdm_distribution, plot_rdm_submatrix
 
 
-def main():  # noqa: PLR0915
-
+def main():
     # Parse command-line arguments
     parser = argparse.ArgumentParser(description="CLIP + PyTorch Pipeline for RDM Modeling")
     parser.add_argument(
@@ -42,13 +35,13 @@ def main():  # noqa: PLR0915
     )
     try:
         args = parser.parse_args()
-        if not os.path.exists(args.root_dir):
+        if not os.path.exists(args.root_dir):  # noqa: PTH110
             raise FileNotFoundError(f"Root directory does not exist: {args.root_dir}")
     except argparse.ArgumentError as e:
-        logging.error("Error parsing command-line arguments: %s", e)
+        logger.error("Error parsing command-line arguments: %s", e)
         sys.exit(1)
     except FileNotFoundError as e:
-        logging.error(e)
+        logger.error(e)
         sys.exit(1)
 
     #######################
@@ -83,7 +76,7 @@ def main():  # noqa: PLR0915
     #      START TRAINING
     row_indices, col_indices, rdm_values = generate_pair_indices(rdm)
     train_loss, train_acc, test_loss, test_acc = train_all(row_indices, col_indices, rdm_values, embeddings, device)
-    
+
     #######################
     #    PLOT TRAINING CURVES
     #    NOTE: For KFOLD - we plot over N Folds (vs Standard training, over N Epochs)
@@ -97,13 +90,18 @@ def main():  # noqa: PLR0915
         accuracy_list = []
         for layer_num in clip_config.LAYERS_LIST:  # e.g. [0, 1, 2, 3]
             logger.info("Starting layer sweep for %s hidden layers.", layer_num)
-            _, _, _, sweep_test_acc = train_all(row_indices, col_indices, rdm_values, embeddings, device, hidden_layers=layer_num)
+            _, _, _, sweep_test_acc = train_all(
+                row_indices, col_indices, rdm_values, embeddings, device, hidden_layers=layer_num
+            )
             if not clip_config.K_FOLD:
                 accuracy_list.append(max(sweep_test_acc))
             else:
                 accuracy_list.append(np.mean(sweep_test_acc))
 
-        plot_accuracy_vs_layers(clip_config.LAYERS_LIST, accuracy_list, is_thingsvision=args.thingsvision, metric=clip_config.ACCURACY)
+        plot_accuracy_vs_layers(
+            clip_config.LAYERS_LIST, accuracy_list, is_thingsvision=args.thingsvision, metric=clip_config.ACCURACY
+        )
+
 
 if __name__ == "__main__":
     main()

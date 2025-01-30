@@ -1,8 +1,10 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
-from ..config import clip_config
+
 from ...project.logger import logger
+from ..config import clip_config
+
 
 def plot_rdm_submatrix(rdm, subset_size=100):
     subset_rdm = rdm[:subset_size, :subset_size]
@@ -108,7 +110,7 @@ def plot_training_history(train_loss, train_acc, test_loss, test_acc, metric="r2
     plt.show()
 
 
-def plot_accuracy_vs_layers(hidden_layers_list, accuracy_list, is_thingsvision=False, metric="r2"):
+def plot_accuracy_vs_layers(hidden_layers_list, accuracy_list, is_thingsvision=False, metric="r2"):  # noqa: FBT002
     if is_thingsvision:
         title = f"Metric = {metric}, Feature vectors: THINGSvision"
     else:
@@ -123,6 +125,7 @@ def plot_accuracy_vs_layers(hidden_layers_list, accuracy_list, is_thingsvision=F
     plt.grid(axis="y", linestyle="--", alpha=0.7)
     plt.tight_layout()
     plt.show()
+
 
 def all_plots(train_loss, train_acc, test_loss, test_acc):
     if not clip_config.K_FOLD:

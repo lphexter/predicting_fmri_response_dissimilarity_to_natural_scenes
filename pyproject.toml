@@ -76,6 +76,10 @@ lint.ignore = [
     "D102", # ignore docstring in public method
     "TID252", # allow relative imports
     "INP001", # allow implicit packages
+    "TRY301", # ignore error message handling issues
+    "TRY003", # more errror message handling
+    "EM101", # error msg as literal string
+    "EM102", # error msg as literal string pt 2
 ]
 
 [tool.ruff.lint.per-file-ignores]

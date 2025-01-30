@@ -1,15 +1,16 @@
-import numpy as np
 import sys
+
+import numpy as np
 import torch
 from scipy.stats import pearsonr, spearmanr
 from sklearn.metrics import r2_score
-from torch import optim, nn
+from torch import nn, optim
 from torch.utils.data import DataLoader
 
+from ...project.logger import logger
 from ..config import clip_config
 from ..models.pytorch_models import DynamicLayerSizeNeuralNetwork
 from .pytorch_data import PairDataset, prepare_data_for_kfold, train_test_split_pairs
-from ...project.logger import logger
 
 
 def compute_accuracy(predictions, targets, metric=clip_config.ACCURACY):
@@ -22,7 +23,7 @@ def compute_accuracy(predictions, targets, metric=clip_config.ACCURACY):
         return pearsonr(targ_np, pred_np)[0]
     if metric == "spearman":
         return spearmanr(targ_np, pred_np)[0]
-    raise ValueError(f"Unknown accuracy metric: {metric}")  # noqa: TRY003, EM102
+    raise ValueError(f"Unknown accuracy metric: {metric}")
 
 
 def train_epoch(model, train_loader, criterion, optimizer, device):
@@ -139,8 +140,8 @@ def train_model_kfold(loaders, criterion, device, num_layers=clip_config.HIDDEN_
 
     return train_loss_history, train_accuracy_history, test_loss_history, test_accuracy_history
 
+
 def reconstruct_predicted_rdm(model, embeddings, row_indices, col_indices, device):
-    
     N = embeddings.shape[0]
     predicted_rdm = np.zeros((N, N), dtype=np.float32)
 
@@ -164,7 +165,8 @@ def reconstruct_predicted_rdm(model, embeddings, row_indices, col_indices, devic
 
     return predicted_rdm
 
-def train_all(row_indices, col_indices, rdm_values, embeddings, device, hidden_layers=clip_config.HIDDEN_LAYERS):
+
+def train_all(row_indices, col_indices, rdm_values, embeddings, device, hidden_layers=clip_config.HIDDEN_LAYERS):  # noqa: PLR0913
     criterion = nn.MSELoss()
 
     try:
@@ -229,5 +231,5 @@ def train_all(row_indices, col_indices, rdm_values, embeddings, device, hidden_l
             num_layers=hidden_layers,  # e.g. 1 hidden layer
             num_epochs=clip_config.EPOCHS,
         )
-    
+
     return train_loss, train_acc, test_loss, test_acc

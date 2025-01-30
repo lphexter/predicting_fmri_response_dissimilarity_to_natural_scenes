@@ -1,15 +1,16 @@
-import os, sys
+import os
+import sys
 
 import numpy as np
 from PIL import Image
 from scipy.spatial.distance import pdist, squareform
 from scipy.stats import pearsonr, spearmanr
-from ..utils.visualizations import show_image_pair
 from sklearn.preprocessing import StandardScaler
 from tqdm import tqdm
 
 from ...project.logger import logger
 from ..config import clip_config
+from ..utils.visualizations import show_image_pair
 
 #########################################
 #    fMRI DATA LOADING & ROI HANDLING
@@ -76,7 +77,7 @@ def _get_concatenated_roi_data(root_data_dir, subj, roi, lh_fmri, rh_fmri, desir
     elif roi == "ALL":
         return np.concatenate((lh_fmri, rh_fmri), axis=1)[:desired_image_number]
     else:
-        raise ValueError(f"ROI '{roi}' not recognized in known classes.")  # noqa: TRY003, EM102
+        raise ValueError(f"ROI '{roi}' not recognized in known classes.")
 
     challenge_roi_rh = _get_fmri_voxels(root_data_dir, subj, roi, "rh", roi_class)
     roi_data_rh = rh_fmri[:, challenge_roi_rh == 1]
@@ -87,7 +88,13 @@ def _get_concatenated_roi_data(root_data_dir, subj, roi, lh_fmri, rh_fmri, desir
     return np.concatenate((roi_data_lh, roi_data_rh), axis=1)[:desired_image_number]
 
 
-def prepare_fmri_data(root_data_dir, subj=clip_config.SUBJECT, desired_image_number=clip_config.DESIRED_IMAGE_NUMBER, roi=clip_config.ROI, region_class=clip_config.REGION_CLASS):  # noqa: C901, PLR0912
+def prepare_fmri_data(  # noqa: PLR0912, C901
+    root_data_dir,
+    subj=clip_config.SUBJECT,
+    desired_image_number=clip_config.DESIRED_IMAGE_NUMBER,
+    roi=clip_config.ROI,
+    region_class=clip_config.REGION_CLASS,
+):
     fmri_dir = os.path.join(root_data_dir, f"subj0{subj}", "training_split", "training_fmri")
     lh_fmri = np.load(os.path.join(fmri_dir, "lh_training_fmri.npy"))
     rh_fmri = np.load(os.path.join(fmri_dir, "rh_training_fmri.npy"))
@@ -107,7 +114,7 @@ def prepare_fmri_data(root_data_dir, subj=clip_config.SUBJECT, desired_image_num
         elif region_class == "Streams":
             rois = ["early", "midventral", "midlateral", "midparietal", "ventral", "lateral", "parietal"]
         else:
-            raise ValueError(f"Unrecognized region_class '{region_class}'.")  # noqa: TRY003, EM102
+            raise ValueError(f"Unrecognized region_class '{region_class}'.")
     elif roi != "None":
         rois = [roi + "v", roi + "d"] if roi in ["V1", "V2", "V3"] else [roi]
     else:
@@ -158,11 +165,12 @@ def prepare_fmri_data(root_data_dir, subj=clip_config.SUBJECT, desired_image_num
 
     try:
         if fmri_data is None or not isinstance(fmri_data, np.ndarray):
-            raise ValueError("Invalid fMRI data loaded.")
+            msg = "Invalid fMRI data loaded."
+            raise ValueError(msg)
     except (TypeError, ValueError) as e:
         logger.error("Error loading fMRI data: %s", e)
         sys.exit(1)
-    
+
     logger.info("fMRI data shape: %s", fmri_data.shape)
 
     return fmri_data
@@ -204,24 +212,22 @@ def analyze_rdm(rdm, images, metric=clip_config.METRIC):
             closest_to_1_idx = np.where(rdm == closest_to_1_value)
             closest_to_1_pair = closest_to_1_idx[0]
             all_metrics["closest_to_1"] = {"value": closest_to_1_value, "pair": closest_to_1_pair}
-        
+
         if not isinstance(all_metrics, dict) or len(all_metrics) == 0:
             raise ValueError("Invalid RDM analysis results.")
 
         logger.info("RDM Value Analysis Results: %s", all_metrics)
 
-        for key in all_metrics:
+        for key in all_metrics.items():
             if "pair" not in all_metrics[key] or "value" not in all_metrics[key]:
                 raise KeyError(f"Missing expected keys in all_metrics for {key}")
             title = f"Pair images of {key} value with score {all_metrics[key]['value']}"
             image_pair = all_metrics[key]["pair"]
             show_image_pair(image_pair[0], image_pair[1], images, title)
-        
+
     except (ValueError, KeyError) as e:
         logger.error("Error analyzing RDM: %s", e)
         sys.exit(1)
-
-    
 
 
 def compare_rdms(raw_rdm, features_rdm):
@@ -247,11 +253,13 @@ def create_rdm(roi_data, metric="correlation"):
     rdm = squareform(distances)
     try:
         if rdm is None or not isinstance(rdm, np.ndarray):
-            raise ValueError("Invalid RDM created.")
+            msg = "Invalid RDM created."
+            raise ValueError(msg)
     except ValueError as e:
         logger.error("Error creating RDM: %s", e)
         sys.exit(1)
     return rdm
+
 
 #############################################
 #     DATA PREP FUNCTIONS FOR DEPRECATED MODEL
