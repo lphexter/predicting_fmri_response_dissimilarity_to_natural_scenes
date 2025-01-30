@@ -1,7 +1,19 @@
-# biu_python_final_project
-BIU python class final project. Full dataset results are run via various Google Colab workbooks (impossible to run with the full dataset on a local machine), but this repo has all corresponding code split out into organized files (per `Directory structure` detailed below). Details on how to run this code locally with a small subset of data are noted here as well.
+# Predicting fMRI Response Dissimilarity to Natural Scenes
+COURSE: Data Science and Advanced Python Concepts Workshop for Neuroscience
+BAR-ILAN UNIVERSITY
 
-## Directory structure
+This project did not aim to replicate or directly compare results from existing papers. Instead, we adopted an exploratory approach to a novel task in an existing problem space.
+The goal of this project is to predict how different our brain response will be to viewing a pair of images representing natural scenes, i.e., predict dissimilarity between fMRI responses to pairs of images.
+
+## PDF report file
+This repository contains a PDF file with the project report. It follows the structure of a scientific report with the following parts: introduction, methodology, results, and conclusion and discussion. As specified in the guidelines, no specific part for citations and references are included.
+
+## Source/Project
+Full dataset results are run via various Google Colab workbooks (impossible to run with the full dataset on a local machine), but this repo has all corresponding code split out into organized files (per `Directory structure` detailed below). Details on how to run this code locally with a small subset of data are noted here as well.
+[Lindsay more explanation about why isn't our main file shorter]
+[In case we have some functions that are not called in the main file explain that we had and used them to check but that are not relevant for the model]
+
+### Directory structure
 <details>
 <summary>Directory Structure</summary>
 
@@ -29,7 +41,7 @@ biu_python_final_project/
 ```
 </details>
 
-## On first run:
+### On first run:
 ```bash 
 # install Virtualenv - a tool to set up your Python environments
 pip install virtualenv
@@ -46,30 +58,30 @@ pip install --upgrade pip
 pip install -e .[dev]
 ``` 
 
-### Setup your data folder
+#### Setup your data folder
 1. Download Google Drive for Desktop [here](https://support.google.com/a/users/answer/13022292?hl=en)
 2. Ensure you have added a [Shortcut](https://support.google.com/drive/answer/9700156?hl=en&co=GENIE.Platform%3DDesktop) from the desired data folder to any folder in your Drive. For the data folder, either setup "algonauts_2023_tutorial_data" per instructions [here](https://docs.google.com/forms/d/e/1FAIpQLSehZkqZOUNk18uTjRTuLj7UYmRGz-OkdsU25AyO3Wm6iAb0VA/viewform?usp=sf_link), or request access to the mini testing data "mini_data_for_python" folder [here](https://drive.google.com/drive/folders/19mXhFsOlFWu2vyPkj5In2VQS-Buu4K48?usp=sharing)
 3. Copy the full Shorcut path for use later, e.g. `~/Library/CloudStorage/GoogleDrive-<your_email>/.shortcut-targets-by-id/<shortcut_id>`
 4. Ensure your data folder is in "offline mode" locally (Right click the folder, e.g. "mini_data_for_python" > Make available offline).
 
-## Running the Models
+### Running the Models
 
-### Configuration files:
+#### Configuration files:
 1. [DEPRECATED] dep_config.py --> user configurations for the first model
 2. clip_config.py --> user configurations for the second model; NOTE: "SWEEP" to True means that you will loop over the layers in "LAYERS_LIST" after it finishes running with the parameterized layer number, HIDDEN_LAYERS
 
     a. [**RECOMMENDED**] Update `LOAD_EMBEDDINGS_FILE` in `clip_config.py` with the proper Shortcut path such that you can use the pre-run embeddings, rather than loading from scratch. If using Windows ensure that the path uses backslashes instead of forwardslashes. If using THINGSvision features, replace `LOAD_EMBEDDINGS_FILE` with the path to the THINGSvision features instead. (NOT RECOMMENDED - Otherwise, update `LOAD_EMBEDDINGS_FILE` TO `""`.)
 
-### [DEPRECATED] First model (Siamese CNN)
+#### [DEPRECATED] First model (Siamese CNN)
 ```bash 
 python3.10 -m src.project.dep_main --root_dir "/absolute/path/to/Google/Drive/Shortcut"
 ```
 
-### Second model (simple MLP)
+#### Second model (simple MLP)
 ```bash 
 python3.10 -m src.project.main --root_dir "/absolute/path/to/Google/Drive/Shortcut"
 ```
-#### Note - to use THINGSvision features, update the above command for the second model with the optional flag `--thingsvision`
+##### Note - to use THINGSvision features, update the above command for the second model with the optional flag `--thingsvision`
 
 ## Modify package dependencies (add/remove/update external modules/packages):
 #### Add new module:
