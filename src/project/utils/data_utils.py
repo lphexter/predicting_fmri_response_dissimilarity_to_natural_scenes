@@ -1,4 +1,5 @@
 import os
+import sys
 
 import numpy as np
 from PIL import Image
@@ -7,7 +8,9 @@ from scipy.stats import pearsonr, spearmanr
 from sklearn.preprocessing import StandardScaler
 from tqdm import tqdm
 
-from ..config.clip_config import METRIC
+from ...project.logger import logger
+from ..config import clip_config
+from ..utils.visualizations import show_image_pair
 
 #########################################
 #    fMRI DATA LOADING & ROI HANDLING
@@ -74,7 +77,7 @@ def _get_concatenated_roi_data(root_data_dir, subj, roi, lh_fmri, rh_fmri, desir
     elif roi == "ALL":
         return np.concatenate((lh_fmri, rh_fmri), axis=1)[:desired_image_number]
     else:
-        raise ValueError(f"ROI '{roi}' not recognized in known classes.")  # noqa: TRY003, EM102
+        raise ValueError(f"ROI '{roi}' not recognized in known classes.")
 
     challenge_roi_rh = _get_fmri_voxels(root_data_dir, subj, roi, "rh", roi_class)
     roi_data_rh = rh_fmri[:, challenge_roi_rh == 1]
@@ -85,7 +88,13 @@ def _get_concatenated_roi_data(root_data_dir, subj, roi, lh_fmri, rh_fmri, desir
     return np.concatenate((roi_data_lh, roi_data_rh), axis=1)[:desired_image_number]
 
 
-def prepare_fmri_data(subj, desired_image_number, roi, region_class, root_data_dir):  # noqa: C901, PLR0912
+def prepare_fmri_data(  # noqa: PLR0912, C901
+    root_data_dir,
+    subj=clip_config.SUBJECT,
+    desired_image_number=clip_config.DESIRED_IMAGE_NUMBER,
+    roi=clip_config.ROI,
+    region_class=clip_config.REGION_CLASS,
+):
     fmri_dir = os.path.join(root_data_dir, f"subj0{subj}", "training_split", "training_fmri")
     lh_fmri = np.load(os.path.join(fmri_dir, "lh_training_fmri.npy"))
     rh_fmri = np.load(os.path.join(fmri_dir, "rh_training_fmri.npy"))
@@ -105,7 +114,7 @@ def prepare_fmri_data(subj, desired_image_number, roi, region_class, root_data_d
         elif region_class == "Streams":
             rois = ["early", "midventral", "midlateral", "midparietal", "ventral", "lateral", "parietal"]
         else:
-            raise ValueError(f"Unrecognized region_class '{region_class}'.")  # noqa: TRY003, EM102
+            raise ValueError(f"Unrecognized region_class '{region_class}'.")
     elif roi != "None":
         rois = [roi + "v", roi + "d"] if roi in ["V1", "V2", "V3"] else [roi]
     else:
@@ -152,7 +161,19 @@ def prepare_fmri_data(subj, desired_image_number, roi, region_class, root_data_d
             roi_data_full = np.concatenate((roi_data_full, data_r), axis=1) if roi_data_full.size else data_r
 
     scaler = StandardScaler()
-    return scaler.fit_transform(roi_data_full)
+    fmri_data = scaler.fit_transform(roi_data_full)
+
+    try:
+        if fmri_data is None or not isinstance(fmri_data, np.ndarray):
+            msg = "Invalid fMRI data loaded."
+            raise ValueError(msg)
+    except (TypeError, ValueError) as e:
+        logger.error("Error loading fMRI data: %s", e)
+        sys.exit(1)
+
+    logger.info("fMRI data shape: %s", fmri_data.shape)
+
+    return fmri_data
 
 
 #########################################
@@ -161,37 +182,52 @@ def prepare_fmri_data(subj, desired_image_number, roi, region_class, root_data_d
 
 
 # return high, low, and closest to 1 values of the RDM along with their pairs
-def analyze_rdm(rdm, metric=METRIC):
-    all_metrics = {}
+def analyze_rdm(rdm, images, metric=clip_config.METRIC):
+    try:
+        all_metrics = {}
 
-    # Get indices of the upper triangular part (excluding diagonal)
-    triu_indices = np.triu_indices_from(rdm, k=1)
+        # Get indices of the upper triangular part (excluding diagonal)
+        triu_indices = np.triu_indices_from(rdm, k=1)
 
-    # Extract the upper triangular values
-    upper_tri_values = rdm[triu_indices]
+        # Extract the upper triangular values
+        upper_tri_values = rdm[triu_indices]
 
-    # 1. Lowest value and corresponding indices
-    lowest_value = np.min(upper_tri_values)
-    lowest_idx = np.where(rdm == lowest_value)
+        # 1. Lowest value and corresponding indices
+        lowest_value = np.min(upper_tri_values)
+        lowest_idx = np.where(rdm == lowest_value)
 
-    # 2. Highest value and corresponding indices
-    highest_value = np.max(upper_tri_values)
-    highest_idx = np.where(rdm == highest_value)
+        # 2. Highest value and corresponding indices
+        highest_value = np.max(upper_tri_values)
+        highest_idx = np.where(rdm == highest_value)
 
-    # Convert from 2D matrix indices to image indices
-    lowest_pair = lowest_idx[0]
-    highest_pair = highest_idx[0]
+        # Convert from 2D matrix indices to image indices
+        lowest_pair = lowest_idx[0]
+        highest_pair = highest_idx[0]
 
-    all_metrics["low"] = {"value": lowest_value, "pair": lowest_pair}
-    all_metrics["high"] = {"value": highest_value, "pair": highest_pair}
+        all_metrics["low"] = {"value": lowest_value, "pair": lowest_pair}
+        all_metrics["high"] = {"value": highest_value, "pair": highest_pair}
 
-    if metric == "correlation":
-        closest_to_1_value = upper_tri_values[np.argmin(np.abs(upper_tri_values - 1))]
-        closest_to_1_idx = np.where(rdm == closest_to_1_value)
-        closest_to_1_pair = closest_to_1_idx[0]
-        all_metrics["closest_to_1"] = {"value": closest_to_1_value, "pair": closest_to_1_pair}
+        if metric == "correlation":
+            closest_to_1_value = upper_tri_values[np.argmin(np.abs(upper_tri_values - 1))]
+            closest_to_1_idx = np.where(rdm == closest_to_1_value)
+            closest_to_1_pair = closest_to_1_idx[0]
+            all_metrics["closest_to_1"] = {"value": closest_to_1_value, "pair": closest_to_1_pair}
 
-    return all_metrics
+        if not isinstance(all_metrics, dict) or len(all_metrics) == 0:
+            raise ValueError("Invalid RDM analysis results.")
+
+        logger.info("RDM Value Analysis Results: %s", all_metrics)
+
+        for key in all_metrics.items():
+            if "pair" not in all_metrics[key] or "value" not in all_metrics[key]:
+                raise KeyError(f"Missing expected keys in all_metrics for {key}")
+            title = f"Pair images of {key} value with score {all_metrics[key]['value']}"
+            image_pair = all_metrics[key]["pair"]
+            show_image_pair(image_pair[0], image_pair[1], images, title)
+
+    except (ValueError, KeyError) as e:
+        logger.error("Error analyzing RDM: %s", e)
+        sys.exit(1)
 
 
 def compare_rdms(raw_rdm, features_rdm):
@@ -214,7 +250,15 @@ def compare_rdms(raw_rdm, features_rdm):
 
 def create_rdm(roi_data, metric="correlation"):
     distances = pdist(roi_data, metric=metric)
-    return squareform(distances)
+    rdm = squareform(distances)
+    try:
+        if rdm is None or not isinstance(rdm, np.ndarray):
+            msg = "Invalid RDM created."
+            raise ValueError(msg)
+    except ValueError as e:
+        logger.error("Error creating RDM: %s", e)
+        sys.exit(1)
+    return rdm
 
 
 #############################################

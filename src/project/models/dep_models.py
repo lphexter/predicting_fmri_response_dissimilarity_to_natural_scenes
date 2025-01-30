@@ -29,7 +29,7 @@ def create_cnn_model(input_shape, activation_func="sigmoid"):
         out_layer = layers.Dense(1, activation="sigmoid")(merged)
         output = out_layer * 2.0
     else:
-        raise ValueError(f"Invalid activation function: {activation_func}")  # noqa: TRY003, EM102
+        raise ValueError(f"Invalid activation function: {activation_func}")
 
     return keras.Model(inputs=[input_1, input_2], outputs=output, name="SiameseCNNModel")
 
