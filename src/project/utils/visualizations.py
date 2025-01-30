@@ -49,21 +49,6 @@ def show_image_pair(idx1, idx2, image_list, title):
     # Show the plot
     plt.show()
 
-
-def plot_rdms(true_rdm, predicted_rdm):
-    fig, axes = plt.subplots(1, 2, figsize=(10, 5))
-    im0 = axes[0].imshow(true_rdm, cmap="viridis", origin="upper")
-    axes[0].set_title("True RDM")
-    plt.colorbar(im0, ax=axes[0])
-
-    im1 = axes[1].imshow(predicted_rdm, cmap="viridis", origin="upper")
-    axes[1].set_title("Predicted RDM")
-    plt.colorbar(im1, ax=axes[1])
-
-    plt.tight_layout()
-    plt.show()
-
-
 def plot_training_history(train_loss, train_acc, test_loss, test_acc, metric="r2", std_dev=False, **kwargs):  # noqa: PLR0913, ANN003, FBT002
     epochs = range(1, len(train_loss) + 1)
 
@@ -153,3 +138,17 @@ def all_plots(train_loss, train_acc, test_loss, test_acc):
             test_loss_std=test_loss_std,
             test_acc_std=test_acc_std,
         )
+
+# used in deprectated model
+def plot_rdms(true_rdm, predicted_rdm):
+    fig, axes = plt.subplots(1, 2, figsize=(10, 5))
+    im0 = axes[0].imshow(true_rdm, cmap="viridis", origin="upper")
+    axes[0].set_title("True RDM")
+    plt.colorbar(im0, ax=axes[0])
+
+    im1 = axes[1].imshow(predicted_rdm, cmap="viridis", origin="upper")
+    axes[1].set_title("Predicted RDM")
+    plt.colorbar(im1, ax=axes[1])
+
+    plt.tight_layout()
+    plt.show()

@@ -229,7 +229,7 @@ def analyze_rdm(rdm, images, metric=clip_config.METRIC):
         logger.error("Error analyzing RDM: %s", e)
         sys.exit(1)
 
-
+# not used in main.py - for initial testing, kept for tracking
 def compare_rdms(raw_rdm, features_rdm):
     # calculate correlation between features rdm and true rdm
     # Get the upper triangular part (excluding the diagonal)

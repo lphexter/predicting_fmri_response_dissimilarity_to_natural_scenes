@@ -1,24 +1,25 @@
 # Predicting fMRI Response Dissimilarity to Natural Scenes
 COURSE: Data Science and Advanced Python Concepts Workshop for Neuroscience
+
 BAR-ILAN UNIVERSITY
 
 This project did not aim to replicate or directly compare results from existing papers. Instead, we adopted an exploratory approach to a novel task in an existing problem space.
 The goal of this project is to predict how different our brain response will be to viewing a pair of images representing natural scenes, i.e., predict dissimilarity between fMRI responses to pairs of images.
 
 ## PDF report file
-This repository contains a PDF file with the project report. It follows the structure of a scientific report with the following parts: introduction, methodology, results, and conclusion and discussion. As specified in the guidelines, no specific part for citations and references are included.
+This repository contains a PDF file with the project report. It follows the structure of a scientific report with the following parts: introduction, methodology, results, and conclusion and discussion. As specified in the guidelines, no citations or references are included.
 
 ## Source/Project
 Full dataset results are run via various Google Colab workbooks (impossible to run with the full dataset on a local machine), but this repo has all corresponding code split out into organized files (per `Directory structure` detailed below). Details on how to run this code locally with a small subset of data are noted here as well.
-[Lindsay more explanation about why isn't our main file shorter]
-[In case we have some functions that are not called in the main file explain that we had and used them to check but that are not relevant for the model]
+
+We have deprecated code here from the first model simply for storage/tracking purposes, not for running or grading. We also have certain functions which we used for testing, but are not called in main.py as they are not part of the core analysis.
 
 ### Directory structure
 <details>
 <summary>Directory Structure</summary>
 
 ```bash
-biu_python_final_project/
+predicting_fmri_response_dissimilarity_to_natural_scenes/
   ├── src/
   │   ├── project/
   │   │   ├── config/

@@ -3,7 +3,7 @@
 import logging
 
 # Create a named logger
-logger = logging.getLogger("biu_python_final_project")  # Change "project_logger" to your project name
+logger = logging.getLogger("predicting_fmri_response_dissimilarity_to_natural_scenes")  # Change "project_logger" to your project name
 logger.setLevel(logging.INFO)  # Set global logging level
 
 # Prevent log duplication from root logger
