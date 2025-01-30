@@ -22,6 +22,8 @@ ds = [
     "torchvision",
     "torchaudio",
     "tensorflow",
+    "tensorflow_probability",
+    "tf-keras",
     "transformers",
     "scikit-learn",
     "scipy==1.13.1",

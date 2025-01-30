@@ -218,11 +218,11 @@ def analyze_rdm(rdm, images, metric=clip_config.METRIC):
 
         logger.info("RDM Value Analysis Results: %s", all_metrics)
 
-        for key in all_metrics.items():
-            if "pair" not in all_metrics[key] or "value" not in all_metrics[key]:
+        for key, value in all_metrics.items():
+            if "pair" not in value or "value" not in value:
                 raise KeyError(f"Missing expected keys in all_metrics for {key}")
-            title = f"Pair images of {key} value with score {all_metrics[key]['value']}"
-            image_pair = all_metrics[key]["pair"]
+            title = f"Pair images of {key} value with score {value['value']}"
+            image_pair = value["pair"]
             show_image_pair(image_pair[0], image_pair[1], images, title)
 
     except (ValueError, KeyError) as e:
