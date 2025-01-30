@@ -41,7 +41,7 @@ def main():  # noqa: PLR0915
     parser = argparse.ArgumentParser(description="CLIP + PyTorch Pipeline for RDM Modeling")
     parser.add_argument(
         "--root_dir", type=str, default=clip_config.ROOT_DATA_DIR, help="Path to the root data directory"
-    )
+    )  # example local shortcut path (per README): "/Users/lindsayhexter/Library/CloudStorage/GoogleDrive-cinnabonswirl123@gmail.com/My Drive/Colab Notebooks"
     parser.add_argument(
         "--thingsvision", action="store_true", help="Enable the thingsvision flag. Defaults to False if not provided."
     )
@@ -51,14 +51,14 @@ def main():  # noqa: PLR0915
     #   LOAD / PREP FMRI
     #######################
     fmri_data = prepare_fmri_data(
-        subj=clip_config.SUBJECT,
-        desired_image_number=clip_config.DESIRED_IMAGE_NUMBER,
-        roi=clip_config.ROI,
-        region_class=clip_config.REGION_CLASS,
-        root_data_dir=f"{args.root_dir}/{clip_config.ROOT_DATA_DIR}",
+        subj=clip_config.SUBJECT,  # e.g. "1"
+        desired_image_number=clip_config.DESIRED_IMAGE_NUMBER,  # e.g. "50"
+        roi=clip_config.ROI,  # e.g. "V1v"
+        region_class=clip_config.REGION_CLASS,  # e.g. "Visual"
+        root_data_dir=f"{args.root_dir}/{clip_config.ROOT_DATA_DIR}",  # we create the full directory path, so Shortcut path + data directory, e.g. "mini_data_for_python"
     )
     logging.info("fMRI data shape: %s", fmri_data.shape)
-    rdm = create_rdm(fmri_data, metric=clip_config.METRIC)
+    rdm = create_rdm(fmri_data, metric=clip_config.METRIC)  # e.g. correlation, euclidean
 
     # Plot subset + distribution
     plot_rdm_submatrix(rdm, subset_size=100)
@@ -108,23 +108,29 @@ def main():  # noqa: PLR0915
         logging.info("Starting standard training (not KFold)")
 
         X_train_indices, X_test_indices, y_train, y_test = train_test_split_pairs(
-            row_indices, col_indices, rdm_values, test_size=clip_config.TEST_SIZE
+            row_indices,
+            col_indices,
+            rdm_values,
+            test_size=clip_config.TEST_SIZE,  # e.g. 0.2 = 20% test
         )
 
         train_dataset = PairDataset(embeddings, X_train_indices, y_train)
         test_dataset = PairDataset(embeddings, X_test_indices, y_test)
 
-        train_loader = DataLoader(train_dataset, batch_size=clip_config.BATCH_SIZE, shuffle=True)
+        train_loader = DataLoader(
+            train_dataset, batch_size=clip_config.BATCH_SIZE, shuffle=True
+        )  # e.g. batch size of 32
         test_loader = DataLoader(test_dataset, batch_size=clip_config.BATCH_SIZE, shuffle=False)
 
         #######################
         #   MODEL + TRAIN
         #######################
         model = DynamicLayerSizeNeuralNetwork(
-            hidden_layers=clip_config.HIDDEN_LAYERS, activation_func=clip_config.ACTIVATION_FUNC
+            hidden_layers=clip_config.HIDDEN_LAYERS,
+            activation_func=clip_config.ACTIVATION_FUNC,  # e.g. sigmoid, linear
         ).to(device)
 
-        optimizer = optim.Adam(model.parameters(), lr=clip_config.LEARNING_RATE)
+        optimizer = optim.Adam(model.parameters(), lr=clip_config.LEARNING_RATE)  # e.g. 0.1
         train_loss, train_acc, test_loss, test_acc = train_model(
             model,
             train_loader,
@@ -132,19 +138,23 @@ def main():  # noqa: PLR0915
             criterion,
             optimizer,
             device,
-            num_epochs=clip_config.EPOCHS,
+            num_epochs=clip_config.EPOCHS,  # e.g. 5 epochs
         )
 
     else:
         logging.info("Starting KFold Training")
         loaders = prepare_data_for_kfold(
-            row_indices, col_indices, rdm_values, embeddings, n_splits=clip_config.K_FOLD_SPLITS
+            row_indices,
+            col_indices,
+            rdm_values,
+            embeddings,
+            n_splits=clip_config.K_FOLD_SPLITS,  # e.g. 5
         )
         train_loss, train_acc, test_loss, test_acc = train_model_kfold(
             loaders,
             criterion,
             device,
-            num_layers=clip_config.HIDDEN_LAYERS,
+            num_layers=clip_config.HIDDEN_LAYERS,  # e.g. 1 hidden layer
             num_epochs=clip_config.EPOCHS,
         )
 
@@ -155,7 +165,9 @@ def main():  # noqa: PLR0915
     if not clip_config.K_FOLD:
         logging.info("Standard historical plotting over training course (not KFold)")
         # Standard training mode plotting
-        plot_training_history(train_loss, train_acc, test_loss, test_acc, metric=clip_config.ACCURACY)
+        plot_training_history(
+            train_loss, train_acc, test_loss, test_acc, metric=clip_config.ACCURACY
+        )  # e.g. r2, spearman, pearson
     else:
         logging.info("KFold historical plotting over training course with stdev")
         train_loss_std = np.std(train_loss, axis=0)
@@ -189,9 +201,9 @@ def main():  # noqa: PLR0915
     #######################
     #   LAYER SWEEP
     #######################
-    if clip_config.SWEEP_LAYERS:
+    if clip_config.SWEEP_LAYERS:  # True or False - if True, sweep over a list of layers
         accuracy_list = []
-        for layer_num in clip_config.LAYERS_LIST:
+        for layer_num in clip_config.LAYERS_LIST:  # e.g. [0, 1, 2, 3]
             logging.info("\nStarting layer sweep for %s hidden layers.", layer_num)
             if not clip_config.K_FOLD:
                 sweep_model = DynamicLayerSizeNeuralNetwork(
