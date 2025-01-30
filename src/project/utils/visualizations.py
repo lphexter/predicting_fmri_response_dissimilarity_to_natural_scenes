@@ -1,7 +1,8 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
-
+from ..config import clip_config
+from ...project.logger import logger
 
 def plot_rdm_submatrix(rdm, subset_size=100):
     subset_rdm = rdm[:subset_size, :subset_size]
@@ -107,13 +108,45 @@ def plot_training_history(train_loss, train_acc, test_loss, test_acc, metric="r2
     plt.show()
 
 
-def plot_accuracy_vs_layers(hidden_layers_list, accuracy_list, metric="r2"):
+def plot_accuracy_vs_layers(hidden_layers_list, accuracy_list, is_thingsvision=False, metric="r2"):
+    if is_thingsvision:
+        title = f"Metric = {metric}, Feature vectors: THINGSvision"
+    else:
+        title = f"Metric = {metric}, Feature vectors: CLIP Embeddings"
     plt.figure(figsize=(8, 6))
-    plt.bar(hidden_layers_list, accuracy_list, color="skyblue")
-    plt.xlabel("Number of Hidden Layers in MLP")
-    plt.ylabel(metric)
-    plt.title(f"{metric} vs. Number of Hidden Layers")
+    plt.bar(hidden_layers_list, accuracy_list, color="blue")
+    plt.xlabel("Number of Hidden Layers in the MLP Models")
+    plt.ylabel(f"{metric} Accuracy")
+    plt.ylim(top=1)
+    plt.title(title)
     plt.xticks(hidden_layers_list)
     plt.grid(axis="y", linestyle="--", alpha=0.7)
     plt.tight_layout()
     plt.show()
+
+def all_plots(train_loss, train_acc, test_loss, test_acc):
+    if not clip_config.K_FOLD:
+        logger.info("Standard historical plotting over training course (not KFold)")
+        # Standard training mode plotting
+        plot_training_history(
+            train_loss, train_acc, test_loss, test_acc, metric=clip_config.ACCURACY
+        )  # e.g. r2, spearman, pearson
+    else:
+        logger.info("KFold historical plotting over training course with stdev")
+        train_loss_std = np.std(train_loss, axis=0)
+        train_acc_std = np.std(train_acc, axis=0)
+        test_loss_std = np.std(test_loss, axis=0)
+        test_acc_std = np.std(test_acc, axis=0)
+
+        plot_training_history(
+            train_loss,
+            train_acc,
+            test_loss,
+            test_acc,
+            metric=clip_config.ACCURACY,
+            std_dev=True,
+            train_loss_std=train_loss_std,
+            train_acc_std=train_acc_std,
+            test_loss_std=test_loss_std,
+            test_acc_std=test_acc_std,
+        )
