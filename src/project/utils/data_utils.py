@@ -186,10 +186,7 @@ def analyze_rdm(rdm, images, metric=clip_config.METRIC):
     try:
         all_metrics = {}
 
-        # Get indices of the upper triangular part (excluding diagonal)
         triu_indices = np.triu_indices_from(rdm, k=1)
-
-        # Extract the upper triangular values
         upper_tri_values = rdm[triu_indices]
 
         # 1. Lowest value and corresponding indices
@@ -229,23 +226,21 @@ def analyze_rdm(rdm, images, metric=clip_config.METRIC):
         logger.error("Error analyzing RDM: %s", e)
         sys.exit(1)
 
+
 # not used in main.py - for initial testing, kept for tracking
 def compare_rdms(raw_rdm, features_rdm):
-    # calculate correlation between features rdm and true rdm
-    # Get the upper triangular part (excluding the diagonal)
     upper_tri_indices = np.triu_indices(features_rdm.shape[0], k=1)
 
-    # Extract the upper diagonal elements from both RDMs
     features_upper_tri = features_rdm[upper_tri_indices]
     rdm_upper_tri = raw_rdm[upper_tri_indices]
 
-    # Now calculate the Pearson correlation
     corr, _ = pearsonr(features_upper_tri, rdm_upper_tri)
-    print(f"Pearson Correlation between features RDM (upper tri) and true RDM (upper tri): {corr}")
+    logger.info(f"Pearson Correlation between features RDM (upper tri) and true RDM (upper tri): {corr}")
 
-    # Now calculate the Spearman correlation
     corr, _ = spearmanr(features_upper_tri, rdm_upper_tri)
-    print(f"Spearman Correlation between features RDM (upper tri) and true RDM (upper tri): {corr}")
+    logger.info(f"Spearman Correlation between features RDM (upper tri) and true RDM (upper tri): {corr}")
+
+    corr, _ = spearmanr(features_upper_tri, rdm_upper_tri)
 
 
 def create_rdm(roi_data, metric="correlation"):
