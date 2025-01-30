@@ -204,6 +204,7 @@ def analyze_rdm(rdm, images, metric=clip_config.METRIC):
         all_metrics["low"] = {"value": lowest_value, "pair": lowest_pair}
         all_metrics["high"] = {"value": highest_value, "pair": highest_pair}
 
+        # 3. Only for correlation, calculate value closest to 1
         if metric == "correlation":
             closest_to_1_value = upper_tri_values[np.argmin(np.abs(upper_tri_values - 1))]
             closest_to_1_idx = np.where(rdm == closest_to_1_value)
@@ -295,7 +296,7 @@ def prepare_data_for_cnn(rdm, test_size=0.2):
     return X_train_indices, X_test_indices, y_train, y_test
 
 
-def data_generator(image_data, pair_indices, y_data, batch_size=32):
+def data_generator(image_data, pair_indices, y_data, batch_size=clip_config.BATCH_SIZE):
     num_samples = len(y_data)
     row_indices, col_indices = pair_indices
 
