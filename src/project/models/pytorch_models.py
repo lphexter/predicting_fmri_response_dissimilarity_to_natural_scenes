@@ -4,6 +4,7 @@ import torch
 import torch.nn.functional as F  # noqa: N812
 from torch import nn
 
+
 # not used in main.py - for initial testing, kept for tracking
 class NeuralNetwork(nn.Module):
     """Simple MLP: 1024 -> 512 -> 1, with optional hidden layers, final activation if needed."""
