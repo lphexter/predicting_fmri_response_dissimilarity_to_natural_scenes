@@ -9,8 +9,6 @@ from sklearn.metrics import r2_score
 from tensorflow.keras.callbacks import EarlyStopping
 
 from ..project.logger import logger
-
-# Local imports
 from .config import dep_config
 from .models.dep_models import correlation_loss_with_mse, create_cnn_model
 from .utils.data_utils import (
@@ -59,7 +57,7 @@ def main():
         new_width=dep_config.NEW_WIDTH,
         new_height=dep_config.NEW_HEIGHT,
     )
-    logger.info(f"Images shape: {images.shape}")
+    logger.info("Images shape: %s", images.shape)
 
     ########################
     #   CREATE & ANALYZE RDM
@@ -135,13 +133,13 @@ def main():
     # Evaluate based on chosen metric
     if dep_config.ACCURACY == "spearman":
         corr_val, _ = spearmanr(y_pred, y_test)
-        logger.info(f"Spearman Correlation: {corr_val}")
+        logger.info("Spearman Correlation: %s", corr_val)
     elif dep_config.ACCURACY == "pearson":
         corr_val, _ = pearsonr(y_pred, y_test)
-        logger.info(f"Pearson Correlation: {corr_val}")
+        logger.info("Pearson Correlation: %s", corr_val)
     elif dep_config.ACCURACY == "r2":
         r2_val = r2_score(y_test, y_pred)
-        logger.info(f"R^2 Score: {r2_val}")
+        logger.info("R^2 Score: %s", r2_val)
     else:
         raise ValueError(f"Invalid accuracy metric: {dep_config.ACCURACY}")
 
@@ -149,7 +147,7 @@ def main():
     corr_sp, _ = spearmanr(y_pred, y_test)
     corr_pe, _ = pearsonr(y_pred, y_test)
     r2_val = r2_score(y_test, y_pred)
-    logger.info(f"[All metrics] Spearman: {corr_sp}, Pearson: {corr_pe}, R^2: {r2_val}")
+    logger.info("[All metrics] Spearman: %s, Pearson: %s, R^2: %s", corr_sp, corr_pe, r2_val)
 
     ########################
     #     RDM COMPARISON
