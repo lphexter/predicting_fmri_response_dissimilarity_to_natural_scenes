@@ -236,10 +236,10 @@ def compare_rdms(raw_rdm, features_rdm):
     rdm_upper_tri = raw_rdm[upper_tri_indices]
 
     corr, _ = pearsonr(features_upper_tri, rdm_upper_tri)
-    logger.info(f"Pearson Correlation between features RDM (upper tri) and true RDM (upper tri): {corr}")
+    logger.info("Pearson Correlation between features RDM (upper tri) and true RDM (upper tri): %s", corr)
 
     corr, _ = spearmanr(features_upper_tri, rdm_upper_tri)
-    logger.info(f"Spearman Correlation between features RDM (upper tri) and true RDM (upper tri): {corr}")
+    logger.info("Spearman Correlation between features RDM (upper tri) and true RDM (upper tri): %s", corr)
 
     corr, _ = spearmanr(features_upper_tri, rdm_upper_tri)
 
