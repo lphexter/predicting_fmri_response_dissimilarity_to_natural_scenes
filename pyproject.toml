@@ -30,7 +30,8 @@ ds = [
     "tqdm==4.67.1",
     "matplotlib==3.10.0",
     "seaborn==0.13.2",
-    "Pillow"
+    "Pillow",
+    "pytest"
 ]
 lint = [
     "mypy",
