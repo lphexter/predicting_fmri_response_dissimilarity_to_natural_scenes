@@ -11,7 +11,7 @@ DESIRED_IMAGE_NUMBER = 50
 # CLIP MODEL
 #############################################
 PRETRAINED_MODEL = "openai/clip-vit-base-patch32"
-LOAD_EMBEDDINGS_FILE = ""
+LOAD_EMBEDDINGS_FILE = "/absolute/path/to/Google/Drive/Shortcut/mini_data_for_python/embeddings_2500_1.npy"
 
 #############################################
 # RDM / TRAIN PARAMS
