@@ -113,7 +113,6 @@ pip install -e .[dev]
 4. Ensure your data folder is in "offline mode" locally (Right click the folder, e.g. "mini_data_for_python" > Make available offline).
 
 ### Running the Models
-Details on how to run this code locally with a small subset of data are noted here as well.
 
 #### [DEPRECATED] First model (Siamese CNN)
 ```bash 
