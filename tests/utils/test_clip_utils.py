@@ -2,10 +2,11 @@ import numpy as np
 import pytest
 import torch
 from PIL import Image
-from src.project.config import clip_config
-from src.project.utils import clip_utils
-from src.project.utils.clip_utils import get_image_embeddings, load_clip_model, load_images
 from transformers import CLIPModel, CLIPProcessor
+
+from project.config import clip_config
+from project.utils import clip_utils
+from project.utils.clip_utils import get_image_embeddings, load_clip_model, load_images
 
 
 def dummy_clip_model():

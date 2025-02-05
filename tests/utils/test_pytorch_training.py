@@ -1,9 +1,12 @@
 import numpy as np
 import pytest
 import torch
-from src.project.config import clip_config
-from src.project.utils import pytorch_training
-from src.project.utils.pytorch_training import (
+from torch import nn, optim
+from torch.utils.data import DataLoader, TensorDataset
+
+from project.config import clip_config
+from project.utils import pytorch_training
+from project.utils.pytorch_training import (
     compute_accuracy,
     reconstruct_predicted_rdm,
     train_all,
@@ -11,8 +14,6 @@ from src.project.utils.pytorch_training import (
     train_model,
     validate_epoch,
 )
-from torch import nn, optim
-from torch.utils.data import DataLoader, TensorDataset
 
 
 class DummyModel(nn.Module):

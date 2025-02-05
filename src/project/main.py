@@ -15,8 +15,8 @@ import sys
 import numpy as np
 import torch
 
-from ..project.logger import logger
 from .config import clip_config
+from .logger import logger
 from .utils.clip_utils import get_image_embeddings, load_images
 from .utils.data_utils import analyze_rdm, create_rdm, prepare_fmri_data
 from .utils.pytorch_data import generate_pair_indices

@@ -7,8 +7,8 @@ from sklearn.metrics import r2_score
 from torch import nn, optim
 from torch.utils.data import DataLoader
 
-from ...project.logger import logger
 from ..config import clip_config
+from ..logger import logger
 from ..models.pytorch_models import DynamicLayerSizeNeuralNetwork
 from .pytorch_data import PairDataset, prepare_data_for_kfold, train_test_split_pairs
 

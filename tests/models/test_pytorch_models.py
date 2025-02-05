@@ -1,5 +1,6 @@
 import torch
-from src.project.models import pytorch_models
+
+from project.models import pytorch_models
 
 ###################
 # NOTE: Only testing properties of DynamicLayerSizeNeuralNetwork as it's the final model Class we use in our experiments
@@ -53,14 +54,19 @@ def test_layer_count():
 def test_forward_values_linear():
     """Test that the network with linear activation can produce outputs outside of the [0, 2] range.
 
-    Since the "linear" activation does not bound the output, we expect that the output values
-    are not restricted to the [0, 2] interval.
+    Since the "linear" activation does not bound the output, we expect that if we force the final
+    layer to produce a large negative or positive shift, the output will fall outside [0,2].
     """
     hidden_layers = 1
     model = pytorch_models.DynamicLayerSizeNeuralNetwork(hidden_layers=hidden_layers, activation_func="linear")
-    # Set a manual seed for reproducibility
-    torch.manual_seed(42)
+
+    # Manually adjust the final layer parameters to force the output outside [0, 2]
+    final_layer = model.layers[-1]
+    torch.nn.init.constant_(final_layer.weight, 1.0)
+    torch.nn.init.constant_(final_layer.bias, -10.0)
+
     input_tensor = torch.randn(4, 1024)
     output = model(input_tensor)
-    # Check that the output is not strictly between 0 and 2.
+
+    # With a bias of -10, we expect that many outputs will be less than 0.
     assert output.min().item() < 0 or output.max().item() > 2
