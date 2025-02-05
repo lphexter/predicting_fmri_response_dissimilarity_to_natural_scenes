@@ -1,5 +1,5 @@
 [project]
-name = "project"
+name = "predicting_fmri_response_dissimilarity_to_natural_scenes"
 requires-python = ">=3.10,<3.11"
 version = "1.0"
 dependencies = [
@@ -12,8 +12,8 @@ keywords = ["neuroscience", "rdm", "clip", "cnn", "pytorch", "tensorflow"]
 dev = [
     "tox",
     "ipykernel",
-    "project[ds]",
-    "project[lint]",
+    "predicting_fmri_response_dissimilarity_to_natural_scenes[ds]",
+    "predicting_fmri_response_dissimilarity_to_natural_scenes[lint]",
 ]
 ds = [
     "numpy==1.26.4",
