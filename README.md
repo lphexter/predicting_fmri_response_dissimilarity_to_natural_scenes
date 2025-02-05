@@ -1,18 +1,37 @@
+README file:
+Project Documentation:
+  Project description: main objectives, assumptions, hypothesis, etc.
+  Folder/module sutructure, including sub-modules.
+  Key stages and what was done in each (e.g., data import --> data processing --> modeling --> analysis --> visualisation/graphs).
+  Important definitions and explanations of key parameters/configurations.
+Data Description and Link to the Dataset
+References to Papers or Articles used
+Instructions for running the project (commands).
+
+
 # Predicting fMRI Response Dissimilarity to Natural Scenes
 COURSE: Data Science and Advanced Python Concepts Workshop for Neuroscience
 
 BAR-ILAN UNIVERSITY
 
+## Project Documentation
 This project did not aim to replicate or directly compare results from existing papers. Instead, we adopted an exploratory approach to a novel task in an existing problem space.
+
 The goal of this project is to predict how different our brain response will be to viewing a pair of images representing natural scenes, i.e., predict dissimilarity between fMRI responses to pairs of images.
 
-## PDF report file
-This repository contains a PDF file with the project report. It follows the structure of a scientific report with the following parts: introduction, methodology, results, and conclusion and discussion. As specified in the guidelines, no citations or references are included.
+Based on the literature we assume that it is possible to predict a stimulus given an fMRI response (decoding), or vice versa, predicting the fMRI response given a stimulus (encoding).
+Moreover, the similarity between brain responses and machine learning models has also been explored, and moderately high correlations have been reported.
 
-## Source/Project
-Full dataset results are run via various Google Colab workbooks (impossible to run with the full dataset on a local machine), but this repo has all corresponding code split out into organized files (per `Directory structure` detailed below). Details on how to run this code locally with a small subset of data are noted here as well.
+Based on these assumptions we hypothesise that our novel approach could result successful: to build a machine learning model capable of predicting how dissimilarly a given brain region in the visual cortex will process two different images.
 
-We have deprecated code here from the first model simply for storage/tracking purposes, not for running or grading. We also have certain functions which we used for testing, but are not called in main.py as they are not part of the core analysis.
+Two different machine learning model architectures were explored, the first consists of a simple 2-Layer Siamese CNN, which did not succeed to get encouraging results. The second one consists of a Multi-Layer Perceptron model that takes two concatenated embeddings as input, corresponding to the each pair of images, which are obtained using a pretrained model.
+
+**PDF report file:** This repository contains a PDF file with the project report, where the project backgrpung, design and methodology are carefully detailed. It follows the structure of a scientific report with the following parts: introduction, methodology, results, and conclusion and discussion. As specified in the guidelines, no citations or references are included.
+
+## Project structure
+Full dataset results are run via various Google Colab workbooks (impossible to run with the full dataset on a local machine), but this repository has all corresponding code split out into organized files (per `Directory structure` detailed below).
+
+We have deprecated code here from the first model simply for storage/tracking purposes, not for running. We also have certain functions which we used for testing, but are not called in main.py as they are not part of the core analysis.
 
 ### Directory structure
 <details>
@@ -37,10 +56,15 @@ predicting_fmri_response_dissimilarity_to_natural_scenes/
   │   │   │   ├── pytorch_data.py
   │   │   │   ├── pytorch_training.py
   │   │   │   └── visualizations.py
+  │   │   ├── __init__.py
   │   │   ├── dep_main.py
+  │   │   ├── logger.py
   │   │   └── main.py
 ```
 </details>
+
+As shown in the directory structure, our project contains three package-like folders for configuration, machine learning models, and different utilities to use the pretrained model, to preprocess our fMRI data, to prepare our data for the ML model using pytorch, to train our model, and to visualize the results. ...logger... main file
+Three specific files contain the first/deprecated model inside the configuration and model folders, and its main file in source. 
 
 ### On first run:
 ```bash 
@@ -66,6 +90,7 @@ pip install -e .[dev]
 4. Ensure your data folder is in "offline mode" locally (Right click the folder, e.g. "mini_data_for_python" > Make available offline).
 
 ### Running the Models
+Details on how to run this code locally with a small subset of data are noted here as well.
 
 #### Configuration files:
 1. [DEPRECATED] dep_config.py --> user configurations for the first model
