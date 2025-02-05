@@ -11,6 +11,15 @@ from ..logger import logger
 
 
 def load_clip_model(pretrained_model_name="openai/clip-vit-base-patch32", device="cpu"):
+    """Load a pre-trained CLIP model and its processor (from Hugging Face).
+
+    Args:
+        pretrained_model_name (str): The name of the pretrained CLIP model to load.
+        device (str): The device to which the model will be moved (e.g., "cpu" or "cuda").
+
+    Returns:
+        tuple: (transformers.CLIPModel, transformers.CLIPProcessor)
+    """
     model = CLIPModel.from_pretrained(pretrained_model_name).to(device)
     processor = CLIPProcessor.from_pretrained(pretrained_model_name)
     return model, processor
@@ -22,6 +31,18 @@ def get_image_embeddings(
     device="cpu",
     is_thingsvision=False,  # noqa: FBT002
 ):
+    """Retrieve image embeddings for a list of images (either from a file or from scratch).
+
+    Args:
+        images (list of PIL.Image.Image): A list of images for which to generate embeddings.
+        desired_image_number (int): The number of images to process or the maximum number of embeddings
+            to load.
+        device (str): The device on which to perform computations (e.g., "cpu" or "cuda").
+        is_thingsvision (bool): Flag indicating whether to process THINGSvision embeddings.
+
+    Returns:
+        torch.Tensor: A tensor containing the image embeddings.
+    """
     try:
         # load embeddings from a file, not from scratch
         if clip_config.LOAD_EMBEDDINGS_FILE != "":
@@ -62,6 +83,15 @@ def get_image_embeddings(
 
 # Load images from directory
 def load_images(root_dir, desired_image_number=clip_config.DESIRED_IMAGE_NUMBER):
+    """Load images from a specified directory structure.
+
+    Args:
+        root_dir (str): The root directory containing the dataset.
+        desired_image_number (int): The maximum number of images to load.
+
+    Returns:
+        list of PIL.Image.Image: A list of loaded images in RGB format.
+    """
     try:
         image_dir = os.path.join(
             f"{root_dir}/{clip_config.ROOT_DATA_DIR}",

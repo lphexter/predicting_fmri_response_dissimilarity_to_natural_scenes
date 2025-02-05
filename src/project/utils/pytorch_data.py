@@ -96,7 +96,7 @@ def prepare_data_for_kfold(row_indices, col_indices, rdm_values, loaded_features
         col_indices (np.ndarray): 1D array of column indices for each pair.
         rdm_values (np.ndarray):  1D array of RDM values for each pair.
         loaded_features (np.ndarray): The image loaded features.
-        n_splits (int):          Number of folds for cross-validation (default=5).
+        n_splits (int):          Number of folds for cross-validation.
         is_torch (bool):         Whether to convert arrays to torch tensors (default=True).
 
     Returns:
@@ -143,7 +143,23 @@ def prepare_data_for_kfold(row_indices, col_indices, rdm_values, loaded_features
     return loaders
 
 
-class PairDataset(Dataset):  # noqa: D101
+class PairDataset(Dataset):
+    """A PyTorch dataset for handling paired embeddings.
+
+    This dataset is designed to store pairs of embeddings along with their corresponding labels.
+    It takes a set of embeddings, indices defining pairs, and target values.
+
+    Attributes:
+        embeddings (torch.Tensor): The tensor containing all embeddings.
+        row_indices (numpy.ndarray): The indices of the first item in each pair.
+        col_indices (numpy.ndarray): The indices of the second item in each pair.
+        y_data (numpy.ndarray): The target values associated with each pair.
+
+    Methods:
+        __len__(): Returns the number of pairs in the dataset.
+        __getitem__(idx): Retrieves the paired embeddings and target value for a given index.
+    """
+
     def __init__(self, embeddings, pair_indices, y_data):
         super().__init__()
         self.embeddings = embeddings

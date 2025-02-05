@@ -7,6 +7,12 @@ from ..logger import logger
 
 
 def plot_rdm_submatrix(rdm, subset_size=100):
+    """Plots a subset of the Representational Dissimilarity Matrix (RDM).
+
+    Args:
+        rdm (numpy.ndarray): The full RDM matrix.
+        subset_size (int, optional): The size of the subset to display.
+    """
     subset_rdm = rdm[:subset_size, :subset_size]
     plt.figure(figsize=(8, 6))
     sns.heatmap(subset_rdm, cmap="viridis", annot=False, square=True)
@@ -17,6 +23,13 @@ def plot_rdm_submatrix(rdm, subset_size=100):
 
 
 def plot_rdm_distribution(rdm, bins=30, exclude_diagonal=True):  # noqa: FBT002
+    """Plots the distribution of values in the Representational Dissimilarity Matrix (RDM).
+
+    Args:
+        rdm (numpy.ndarray): The full RDM matrix.
+        bins (int, optional): Number of bins in the histogram.
+        exclude_diagonal (bool, optional): Whether to exclude diagonal values.
+    """
     if exclude_diagonal:
         mask = ~np.eye(rdm.shape[0], dtype=bool)
         rdm_values = rdm[mask]
@@ -32,6 +45,14 @@ def plot_rdm_distribution(rdm, bins=30, exclude_diagonal=True):  # noqa: FBT002
 
 
 def show_image_pair(idx1, idx2, image_list, title):
+    """Displays a pair of images side by side.
+
+    Args:
+        idx1 (int): Index of the first image in the list.
+        idx2 (int): Index of the second image in the list.
+        image_list (list of np.ndarray): List of images.
+        title (str): Title for the image pair.
+    """
     fig, axes = plt.subplots(1, 2, figsize=(10, 5))
 
     axes[0].imshow(image_list[idx1])
@@ -45,6 +66,17 @@ def show_image_pair(idx1, idx2, image_list, title):
 
 
 def plot_training_history(train_loss, train_acc, test_loss, test_acc, metric="r2", std_dev=False, **kwargs):  # noqa: PLR0913, ANN003, FBT002
+    """Plots the training and testing loss and accuracy over epochs or folds.
+
+    Args:
+        train_loss (list): Training loss per epoch.
+        train_acc (list): Training accuracy per epoch.
+        test_loss (list): Testing loss per epoch.
+        test_acc (list): Testing accuracy per epoch.
+        metric (str, optional): Accuracy metric used (e.g., "r2", "pearson").
+        std_dev (bool, optional): Whether to plot standard deviation.
+        **kwargs: Additional arguments for standard deviation values.
+    """
     epochs = range(1, len(train_loss) + 1)
 
     # Determine x label based on what kind of training, either standard or K-fold
@@ -95,6 +127,14 @@ def plot_training_history(train_loss, train_acc, test_loss, test_acc, metric="r2
 
 
 def plot_accuracy_vs_layers(hidden_layers_list, accuracy_list, is_thingsvision=False, metric="r2"):  # noqa: FBT002
+    """Plots model accuracy as a function of the number of hidden layers.
+
+    Args:
+        hidden_layers_list (list): List of hidden layer counts.
+        accuracy_list (list): Corresponding model accuracies.
+        is_thingsvision (bool, optional): Whether the model uses THINGSvision features.
+        metric (str, optional): Accuracy metric used.
+    """
     if is_thingsvision:
         title = f"Metric = {metric}, Feature vectors: THINGSvision"
     else:
@@ -112,6 +152,14 @@ def plot_accuracy_vs_layers(hidden_layers_list, accuracy_list, is_thingsvision=F
 
 
 def all_plots(train_loss, train_acc, test_loss, test_acc):
+    """Calls the appropriate training history plotting function based on training mode (standard or K-Fold).
+
+    Args:
+        train_loss (list): Training loss per epoch/fold.
+        train_acc (list): Training accuracy per epoch/fold.
+        test_loss (list): Testing loss per epoch/fold.
+        test_acc (list): Testing accuracy per epoch/fold.
+    """
     if not clip_config.K_FOLD:
         logger.info("Standard historical plotting over training course (not KFold)")
         plot_training_history(
@@ -140,6 +188,12 @@ def all_plots(train_loss, train_acc, test_loss, test_acc):
 
 # used in deprectated model
 def plot_rdms(true_rdm, predicted_rdm):
+    """Plots side-by-side heatmaps of the true and predicted Representational Dissimilarity Matrices (RDMs).
+
+    Args:
+        true_rdm (numpy.ndarray): The ground truth RDM.
+        predicted_rdm (numpy.ndarray): The predicted RDM.
+    """
     fig, axes = plt.subplots(1, 2, figsize=(10, 5))
     im0 = axes[0].imshow(true_rdm, cmap="viridis", origin="upper")
     axes[0].set_title("True RDM", fontsize=16)
