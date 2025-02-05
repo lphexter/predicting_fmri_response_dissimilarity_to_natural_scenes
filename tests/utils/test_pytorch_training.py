@@ -249,8 +249,6 @@ def test_train_all_kfold(monkeypatch):
     """
     device = "cpu"
     # Create a dummy 4x4 RDM.
-    # For example, the matrix below produces 6 unique pairs:
-    # (0,1), (0,2), (0,3), (1,2), (1,3), (2,3)  # noqa: ERA001
     rdm = np.array([[0, 1, 2, 3], [1, 0, 4, 5], [2, 4, 0, 6], [3, 5, 6, 0]], dtype=np.float32)
     # Use the helper function to generate pair indices.
     from src.project.utils.pytorch_data import generate_pair_indices
