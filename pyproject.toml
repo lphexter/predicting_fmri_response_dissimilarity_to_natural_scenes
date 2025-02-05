@@ -85,6 +85,7 @@ lint.ignore = [
 "**/tests/**" = [
     "S101", # Use of `assert` detected
     "D103", # Missing docstring in public function
+    "PLR2004", # Magic values
 ]
 
 [tool.ruff.lint.pyupgrade]
