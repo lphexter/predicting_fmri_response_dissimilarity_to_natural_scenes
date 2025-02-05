@@ -79,11 +79,13 @@ STAGE <2> --> **Loading the CLIP-ViT embeddings.** Embeddings of the pretrained 
 STAGE <3> --> **Training and evaluation of the model.** Data is split into train and test sets, the model is trained, evaluated with the test set, and plotted. Depending on parameters specified in the configuration file, the model will run only for a specified number of hidden layers or for a list of hidden layers, as explained in the above section.
 
 ## Data description
-In this study, we utilized the Natural Scenes Dataset, which contains high-resolution fMRI data collected from eight participants as they viewed 10,000 natural scene images. Each image was presented  aproximately three times, and the fMRI responses were averaged across repetitions.
+In this study, we utilized the Natural Scenes Dataset, which contains high-resolution fMRI data collected from eight participants as they viewed 10,000 natural scene images. Each image was presented  aproximately three times, and the fMRI responses were averaged across repetitions. (Link provided in References.)
 
 ## References
 Algonauts 2023 Challenge --> Algonauts Project. (n.d.). *Algonauts Project: The Challenge.* Retrieved February 4, 2025, from http://algonauts.csail.mit.edu/challenge.html
+
 Natural Scenes Dataset --> Natural Scenes Dataset. (n.d.). *Natural Scenes Dataset.* Retrieved February 4, 2025, from https://naturalscenesdataset.org/
+
 THINGSvision python toolbox and paper --> Hebart, M. N., & Baker, C. I. (2021). THINGSvision: A Python Toolbox for Streamlining the Extraction of Activations From Deep Neural Networks. *Frontiers in Neuroinformatics,* 15, 679838. https://doi.org/10.3389/fninf.2021.679838
 
 ## Instructions for running the project
