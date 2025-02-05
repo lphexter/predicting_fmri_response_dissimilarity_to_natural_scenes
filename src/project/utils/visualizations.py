@@ -10,9 +10,9 @@ def plot_rdm_submatrix(rdm, subset_size=100):
     subset_rdm = rdm[:subset_size, :subset_size]
     plt.figure(figsize=(8, 6))
     sns.heatmap(subset_rdm, cmap="viridis", annot=False, square=True)
-    plt.title("Subset of Representational Dissimilarity Matrix (RDM)")
-    plt.xlabel("Image Index")
-    plt.ylabel("Image Index")
+    plt.title("Subset of Representational Dissimilarity Matrix (RDM)", fontsize=16)
+    plt.xlabel("Image Index", fontsize=14)
+    plt.ylabel("Image Index", fontsize=14)
     plt.show()
 
 
@@ -25,33 +25,30 @@ def plot_rdm_distribution(rdm, bins=30, exclude_diagonal=True):  # noqa: FBT002
 
     plt.figure(figsize=(6, 4))
     plt.hist(rdm_values, bins=bins, color="blue", alpha=0.7)
-    plt.title("Distribution of RDM Values")
-    plt.xlabel("RDM Value")
-    plt.ylabel("Frequency")
+    plt.title("Distribution of RDM Values", fontsize=16)
+    plt.xlabel("RDM Value", fontsize=14)
+    plt.ylabel("Frequency", fontsize=14)
     plt.show()
 
 
 def show_image_pair(idx1, idx2, image_list, title):
-    # Create a figure with two subplots
-    fig, axes = plt.subplots(1, 2, figsize=(10, 5))  # 1 row, 2 columns
+    fig, axes = plt.subplots(1, 2, figsize=(10, 5))
 
-    # Display the first image in the first subplot
     axes[0].imshow(image_list[idx1])
-    axes[0].set_title("Image 1")  # Optional: Add a title
+    axes[0].set_title("Image 1")
 
-    # Display the second image in the second subplot
     axes[1].imshow(image_list[idx2])
-    axes[1].set_title("Image 2")  # Optional: Add a title
+    axes[1].set_title("Image 2")
 
-    # Subtitle
-    fig.suptitle(title)
-
-    # Show the plot
+    fig.suptitle(title, fontsize=14)
     plt.show()
+
 
 def plot_training_history(train_loss, train_acc, test_loss, test_acc, metric="r2", std_dev=False, **kwargs):  # noqa: PLR0913, ANN003, FBT002
     epochs = range(1, len(train_loss) + 1)
 
+    # Determine x label based on what kind of training, either standard or K-fold
+    # Standard training plots over epochs, whereas K-fold plots over each fold (takes last epoch value)
     x_label = "Epoch" if not std_dev else "Fold"
 
     plt.figure(figsize=(12, 5))
@@ -70,10 +67,11 @@ def plot_training_history(train_loss, train_acc, test_loss, test_acc, metric="r2
         plt.fill_between(
             epochs, test_loss - kwargs.get("test_loss_std", 0), test_loss + kwargs.get("test_loss_std", 0), alpha=0.2
         )
-    plt.xlabel(f"{x_label}")
-    plt.ylabel("Loss")
-    plt.title(f"Loss over {x_label}s")
+    plt.xlabel(f"{x_label}", fontsize=14)
+    plt.ylabel("Loss", fontsize=14)
+    plt.title(f"Loss over {x_label}s", fontsize=16)
     plt.legend()
+    plt.xticks(epochs)
 
     # Plot Accuracy
     plt.subplot(1, 2, 2)
@@ -86,10 +84,11 @@ def plot_training_history(train_loss, train_acc, test_loss, test_acc, metric="r2
         plt.fill_between(
             epochs, test_acc - kwargs.get("test_acc_std", 0), test_acc + kwargs.get("test_acc_std", 0), alpha=0.2
         )
-    plt.xlabel(x_label)
-    plt.ylabel(metric.capitalize())
-    plt.title(f"{metric.capitalize()} over {x_label}s")
+    plt.xlabel(x_label, fontsize=14)
+    plt.ylabel(metric.capitalize(), fontsize=14)
+    plt.title(f"{metric.capitalize()} over {x_label}s", fontsize=16)
     plt.legend()
+    plt.xticks(epochs)
 
     plt.tight_layout()
     plt.show()
@@ -102,11 +101,11 @@ def plot_accuracy_vs_layers(hidden_layers_list, accuracy_list, is_thingsvision=F
         title = f"Metric = {metric}, Feature vectors: CLIP Embeddings"
     plt.figure(figsize=(8, 6))
     plt.bar(hidden_layers_list, accuracy_list, color="blue")
-    plt.xlabel("Number of Hidden Layers in the MLP Models")
-    plt.ylabel(f"{metric} Accuracy")
+    plt.xlabel("Number of Hidden Layers in the MLP Models", fontsize=14)
+    plt.ylabel(f"{metric} Accuracy", fontsize=14)
     plt.ylim(top=1)
-    plt.title(title)
-    plt.xticks(hidden_layers_list)
+    plt.title(title, fontsize=16)
+    plt.xticks(hidden_layers_list, fontsize=14)
     plt.grid(axis="y", linestyle="--", alpha=0.7)
     plt.tight_layout()
     plt.show()
@@ -115,7 +114,6 @@ def plot_accuracy_vs_layers(hidden_layers_list, accuracy_list, is_thingsvision=F
 def all_plots(train_loss, train_acc, test_loss, test_acc):
     if not clip_config.K_FOLD:
         logger.info("Standard historical plotting over training course (not KFold)")
-        # Standard training mode plotting
         plot_training_history(
             train_loss, train_acc, test_loss, test_acc, metric=clip_config.ACCURACY
         )  # e.g. r2, spearman, pearson
@@ -139,15 +137,16 @@ def all_plots(train_loss, train_acc, test_loss, test_acc):
             test_acc_std=test_acc_std,
         )
 
+
 # used in deprectated model
 def plot_rdms(true_rdm, predicted_rdm):
     fig, axes = plt.subplots(1, 2, figsize=(10, 5))
     im0 = axes[0].imshow(true_rdm, cmap="viridis", origin="upper")
-    axes[0].set_title("True RDM")
+    axes[0].set_title("True RDM", fontsize=16)
     plt.colorbar(im0, ax=axes[0])
 
     im1 = axes[1].imshow(predicted_rdm, cmap="viridis", origin="upper")
-    axes[1].set_title("Predicted RDM")
+    axes[1].set_title("Predicted RDM", fontsize=16)
     plt.colorbar(im1, ax=axes[1])
 
     plt.tight_layout()

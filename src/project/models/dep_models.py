@@ -39,12 +39,10 @@ def correlation_loss_with_mse(y_true, y_pred, alpha=0.5):
 
     alpha=1 => correlation-only, alpha=0 => MSE-only.
     """
-    # 1) Pearson correlation (negative sign to maximize correlation)
     r = tfp.stats.correlation(y_true, y_pred, sample_axis=0, event_axis=None)
     correlation_loss_val = -r  # Negative sign to maximize correlation
 
-    # 2) MSE
     mse_loss_val = tf.reduce_mean(tf.square(y_true - y_pred))
 
-    # 3) Weighted sum
-    return alpha * correlation_loss_val + (1 - alpha) * mse_loss_val  # the loss
+    # Calculating a weighted sum of correlation and MSE loss
+    return alpha * correlation_loss_val + (1 - alpha) * mse_loss_val

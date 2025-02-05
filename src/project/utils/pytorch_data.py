@@ -3,6 +3,8 @@ import torch
 from sklearn.model_selection import KFold, train_test_split
 from torch.utils.data import DataLoader, Dataset
 
+from ..config import clip_config
+
 
 def generate_pair_indices(rdm):
     """Generates row_indices, col_indices for all unique pairs (i,j) where i < j,
@@ -54,7 +56,7 @@ def train_test_split_pairs(row_indices, col_indices, rdm_values, test_size=0.2, 
         y_train (np.ndarray):    RDM values for the train pairs.
         y_test (np.ndarray):     RDM values for the test pairs.
     """  # noqa: D205
-    # 1. all image indices
+    # 1. Create array of image indices for calculating pairs
     all_images = np.arange(len(row_indices))
 
     # 2. Split those images into train/test
@@ -100,7 +102,7 @@ def prepare_data_for_kfold(row_indices, col_indices, rdm_values, loaded_features
     Returns:
         A list of (train_loader, test_loader) tuples for each fold.
     """
-    # 1. all image indices
+    # 1. Create array of image indices for calculating pairs
     all_images = np.arange(len(row_indices))
 
     # 2. Create KFold object for splitting images
@@ -109,7 +111,6 @@ def prepare_data_for_kfold(row_indices, col_indices, rdm_values, loaded_features
     # 3. Generate loaders for each fold
     loaders = []
     for train_images_index, test_images_index in kf.split(all_images):
-        # Get the train and test images
         train_images = all_images[train_images_index]
         test_images = all_images[test_images_index]
         train_set, test_set = set(train_images), set(test_images)
@@ -131,13 +132,11 @@ def prepare_data_for_kfold(row_indices, col_indices, rdm_values, loaded_features
         y_train = rdm_values[train_pair_indices]
         y_test = rdm_values[test_pair_indices]
 
-        # Create datasets
         train_dataset = PairDataset(loaded_features, X_train_indices, y_train)
         test_dataset = PairDataset(loaded_features, X_test_indices, y_test)
 
-        # Choose an appropriate batch_size
-        train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
-        test_loader = DataLoader(test_dataset, batch_size=32, shuffle=False)
+        train_loader = DataLoader(train_dataset, batch_size=clip_config.BATCH_SIZE, shuffle=True)
+        test_loader = DataLoader(test_dataset, batch_size=clip_config.BATCH_SIZE, shuffle=False)
 
         loaders.append((train_loader, test_loader))
 
