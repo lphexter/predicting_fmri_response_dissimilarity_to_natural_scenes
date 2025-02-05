@@ -57,7 +57,7 @@ As shown in the directory structure, our project contains three package-like fol
 
 Outside of the source/project/ we have the TOML file which defines the project metadata, dependencies, and tool configurations; the Tox file which automates running linting; and the test files which contain unit tests to validate the project's functionality.
 
-**About the test files:** tests were excluded for any deprecated code, visualizations.py, and main.py (unit tests already cover functions called in main.py).
+**About the test files:** tests were excluded for any deprecated code, visualizations.py, and main.py (unit tests already cover functions called in main.py). Additionally, magic number checking was excluded in test files.
 
 ### Configuration files: important explanations
 1. [DEPRECATED] dep_config.py --> user configurations for the first/deprecated model
