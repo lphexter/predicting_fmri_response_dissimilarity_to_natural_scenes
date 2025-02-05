@@ -73,7 +73,7 @@ def test_compute_accuracy_invalid():
     """Test that compute_accuracy raises a ValueError for an unknown metric."""
     predictions = torch.tensor([1.0, 2.0])
     targets = torch.tensor([1.0, 2.0])
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         compute_accuracy(predictions, targets, metric="unknown_metric")
 
 
@@ -112,7 +112,7 @@ def test_train_model(monkeypatch):
     monkeypatch.setattr(
         pytorch_training,
         "DynamicLayerSizeNeuralNetwork",
-        lambda hidden_layers, activation_func=None: DummyModel(constant_value=0.5),
+        lambda _hidden_layers, _activation_func=None: DummyModel(constant_value=0.5),
     )
     # Override EPOCHS for quick testing.
     monkeypatch.setattr(clip_config, "EPOCHS", 1)
@@ -157,7 +157,7 @@ def test_train_model_kfold(monkeypatch):
     monkeypatch.setattr(
         pytorch_training,
         "DynamicLayerSizeNeuralNetwork",
-        lambda hidden_layers, activation_func=None: DummyModel(constant_value=0.5),
+        lambda hidden_layers, activation_func=None: DummyModel(constant_value=0.5),  # noqa: ARG005
     )
     # Prepare k-fold data
     loaders = pytorch_training.prepare_data_for_kfold(row_indices, col_indices, rdm_values, loaded_features, n_splits=2)
@@ -228,7 +228,7 @@ def test_train_all_standard(monkeypatch):
     monkeypatch.setattr(
         pytorch_training,
         "DynamicLayerSizeNeuralNetwork",
-        lambda hidden_layers, activation_func=None: DummyModel(constant_value=0.5),
+        lambda hidden_layers, activation_func=None: DummyModel(constant_value=0.5),  # noqa: ARG005
     )
 
     train_loss, train_acc, test_loss, test_acc = train_all(
@@ -250,7 +250,7 @@ def test_train_all_kfold(monkeypatch):
     device = "cpu"
     # Create a dummy 4x4 RDM.
     # For example, the matrix below produces 6 unique pairs:
-    # (0,1), (0,2), (0,3), (1,2), (1,3), (2,3)
+    # (0,1), (0,2), (0,3), (1,2), (1,3), (2,3)  # noqa: ERA001
     rdm = np.array([[0, 1, 2, 3], [1, 0, 4, 5], [2, 4, 0, 6], [3, 5, 6, 0]], dtype=np.float32)
     # Use the helper function to generate pair indices.
     from src.project.utils.pytorch_data import generate_pair_indices
@@ -270,7 +270,7 @@ def test_train_all_kfold(monkeypatch):
     monkeypatch.setattr(
         pytorch_training,
         "DynamicLayerSizeNeuralNetwork",
-        lambda hidden_layers, activation_func=None: DummyModel(constant_value=0.5),
+        lambda hidden_layers, activation_func=None: DummyModel(constant_value=0.5),  # noqa: ARG005
     )
 
     # Call train_all in KFold mode.

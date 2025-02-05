@@ -40,7 +40,7 @@ def test_get_fmri_voxels(tmp_path):
     np.save(challenge_file, challenge_array)
     # Create the ROI mapping file: mapping_{roi_class}.npy in the same directory.
     roi_map_file = roi_dir / f"mapping_{roi_class}.npy"
-    # Create a mapping dictionary where key "A" corresponds to the human‐readable roi.
+    # Create a mapping dictionary where key "A" corresponds to the human readable roi.
     mapping = {"A": roi}
     np.save(roi_map_file, mapping)
 
@@ -138,7 +138,7 @@ def test_analyze_rdm(monkeypatch):
     # Collect calls to show_image_pair.
     calls = []
 
-    def fake_show_image_pair(i, j, imgs, title):
+    def fake_show_image_pair(i, j, _imgs, title):
         calls.append((i, j, title))
 
     monkeypatch.setattr(data_utils, "show_image_pair", fake_show_image_pair)
@@ -241,7 +241,7 @@ def test_create_rdm_from_vectors():
     # are provided in order. For example, if vectors = [1, 2, 3],
     # the expected RDM is:
     # [[0, 1, 2],
-    #  [1, 0, 3],
+    #  [1, 0, 3],  # noqa: ERA001
     #  [2, 3, 0]]
     vectors = np.array([1, 2, 3])
     rdm_out = create_rdm_from_vectors(vectors)

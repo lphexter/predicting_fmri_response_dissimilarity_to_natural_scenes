@@ -12,10 +12,10 @@ def dummy_clip_model():
     """Return dummy CLIP model and processor objects for testing."""
 
     class DummyModel:
-        def to(self, device):
+        def to(self, _device):
             return self
 
-        def get_image_features(self, **kwargs):
+        def get_image_features(self, **kwargs):  # noqa: ANN003
             # Assume the dummy inputs contain a key "dummy"
             dummy_tensor = kwargs["dummy"]
             batch_size = dummy_tensor.shape[0]
@@ -26,12 +26,12 @@ def dummy_clip_model():
             # Initialize the dict with key "dummy"
             super().__init__({"dummy": dummy_tensor})
 
-        def to(self, device):
+        def to(self, _device):
             # Mock moving to device by returning self.
             return self
 
     class DummyProcessor:
-        def __call__(self, images, return_tensors, padding):
+        def __call__(self, images, return_tensors, padding):  # noqa: ARG002
             # Create a dummy tensor with shape (len(images), 10)
             dummy_tensor = torch.ones(len(images), 10)
             # Return an instance of DummyBatchEncoding (a dict subclass with .to())
@@ -45,12 +45,12 @@ def test_load_clip_model(monkeypatch):
     monkeypatch.setattr(
         CLIPModel,
         "from_pretrained",
-        lambda name: dummy_clip_model()[0],
+        lambda _name: dummy_clip_model()[0],
     )
     monkeypatch.setattr(
         CLIPProcessor,
         "from_pretrained",
-        lambda name: dummy_clip_model()[1],
+        lambda _name: dummy_clip_model()[1],
     )
 
     model, processor = load_clip_model("dummy-model", device="cpu")
@@ -87,7 +87,7 @@ def test_get_image_embeddings_scratch(monkeypatch):
     monkeypatch.setattr(
         clip_utils,
         "load_clip_model",
-        lambda *args, **kwargs: dummy_clip_model(),
+        lambda *_args, **_kwargs: dummy_clip_model(),
     )
 
     embeddings = get_image_embeddings(images, desired_image_number=2, device="cpu", is_thingsvision=False)

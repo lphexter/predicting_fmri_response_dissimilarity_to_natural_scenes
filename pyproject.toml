@@ -78,6 +78,7 @@ lint.ignore = [
     "TRY003",  # Do not enforce explicitly capturing exception instances in `except` clauses.
     "EM101",   # Allow using raw string literals for error messages instead of formatting.
     "EM102",   # Allow using raw string literals for exception messages (same as `EM101`).
+    "NPY002", # allow to use np.random in pytests
 ]
 
 [tool.ruff.lint.per-file-ignores]
