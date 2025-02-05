@@ -55,7 +55,7 @@ As shown in the directory structure, our project contains three package-like fol
 Three specific files inside the configuration and model folders, and a main file in source, have deprecated code here from the first model simply for storage/tracking purposes, not for running.
 There are also certain functions which we used for testing, but are not called in main.py as they are not part of the core analysis.
 
-The TOML file defines the project metadata, dependencies, and tool configurations. The Tox file automates testing across multiple environments, ensuring compatibility. The test files contain unit and integration tests to validate the project's functionality.
+Outside of the source/project/ we have the TOML file which defines the project metadata, dependencies, and tool configurations; the Tox file which automates running linting across multiple environments, ensuring compatibility; and the test files which contain unit tests to validate the project's functionality.
 **About the test files:** tests were excluded for visualizations.py, for main.py as there are already tests for all sub-modules created in main.py, and for all deprecated code.
 
 ### Configuration files: important explanations
