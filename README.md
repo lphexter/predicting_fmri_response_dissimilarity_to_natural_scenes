@@ -76,7 +76,7 @@ As a final part of this stage, the first results are calculated and plotted: the
 
 STAGE <2> --> **Loading the CLIP-ViT embeddings.** Embeddings of the pretrained model are either loaded (we have them saved) or calculated from scratch (in case more/different images are wanted). These saved embeddings can be either the normal CLIP-ViT embeddings (corresponding to the last layer of the model), or the embeddings obtained using the THINGSvision python toolbox to extract specifically the visual layers of the CLIP-ViT model. This is specified in the configuration file as well.
 
-STAGE <3> --> **Training and evaluation of the model.** Data is split into train and test sets, the model is trained, evaluated with the test set, and ploted. Depending on what specified in the configuration file, the model will run only for a specified number of hidden layers or for a list of hidden layers, as explained in the above section.
+STAGE <3> --> **Training and evaluation of the model.** Data is split into train and test sets, the model is trained, evaluated with the test set, and plotted. Depending on parameters specified in the configuration file, the model will run only for a specified number of hidden layers or for a list of hidden layers, as explained in the above section.
 
 ## Data description
 In this study, we utilized the Natural Scenes Dataset, which contains high-resolution fMRI data collected from eight participants as they viewed 10,000 natural scene images. Each image was presented  aproximately three times, and the fMRI responses were averaged across repetitions.
