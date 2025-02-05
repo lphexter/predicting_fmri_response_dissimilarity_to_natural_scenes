@@ -8,8 +8,8 @@ from scipy.stats import pearsonr, spearmanr
 from sklearn.metrics import r2_score
 from tensorflow.keras.callbacks import EarlyStopping
 
-from ..project.logger import logger
 from .config import dep_config
+from .logger import logger
 from .models.dep_models import correlation_loss_with_mse, create_cnn_model
 from .utils.data_utils import (
     create_rdm,

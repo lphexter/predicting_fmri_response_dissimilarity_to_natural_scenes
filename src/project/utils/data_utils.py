@@ -8,8 +8,8 @@ from scipy.stats import pearsonr, spearmanr
 from sklearn.preprocessing import StandardScaler
 from tqdm import tqdm
 
-from ...project.logger import logger
 from ..config import clip_config
+from ..logger import logger
 from ..utils.visualizations import show_image_pair
 
 #########################################

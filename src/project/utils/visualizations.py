@@ -2,8 +2,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
 
-from ...project.logger import logger
 from ..config import clip_config
+from ..logger import logger
 
 
 def plot_rdm_submatrix(rdm, subset_size=100):

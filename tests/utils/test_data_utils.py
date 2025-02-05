@@ -1,8 +1,9 @@
 import numpy as np
 from PIL import Image
-from src.project.config import clip_config
-from src.project.utils import data_utils
-from src.project.utils.data_utils import (
+
+from project.config import clip_config
+from project.utils import data_utils
+from project.utils.data_utils import (
     _get_concatenated_roi_data,
     _get_fmri_voxels,
     analyze_rdm,

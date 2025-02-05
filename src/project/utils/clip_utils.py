@@ -6,8 +6,8 @@ import torch
 from PIL import Image
 from transformers import CLIPModel, CLIPProcessor
 
-from ...project.logger import logger
 from ..config import clip_config
+from ..logger import logger
 
 
 def load_clip_model(pretrained_model_name="openai/clip-vit-base-patch32", device="cpu"):

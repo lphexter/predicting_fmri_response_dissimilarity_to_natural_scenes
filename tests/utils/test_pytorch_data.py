@@ -1,6 +1,7 @@
 import numpy as np
 import torch
-from src.project.utils.pytorch_data import (
+
+from project.utils.pytorch_data import (
     PairDataset,
     dep_train_test_split_pairs,
     generate_pair_indices,
