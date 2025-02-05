@@ -63,5 +63,4 @@ def test_forward_values_linear():
     input_tensor = torch.randn(4, 1024)
     output = model(input_tensor)
     # Check that the output is not strictly between 0 and 2.
-    # (Either the minimum is below 0 or the maximum is above 2.)
     assert output.min().item() < 0 or output.max().item() > 2

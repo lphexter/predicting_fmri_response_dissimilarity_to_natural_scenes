@@ -62,9 +62,6 @@ def test_train_test_split_pairs():
     the total number of returned pairs does not exceed the original number.
     """
     # Create dummy pair indices for a hypothetical 4x4 RDM.
-    # (For a 4x4 matrix, one common way is to have:
-    #  pairs: (0,1), (0,2), (0,3), (1,2), (1,3), (2,3))
-    # Here we simulate a scenario with only a subset.
     row_indices = np.array([0, 0, 0, 1, 1, 2])
     col_indices = np.array([1, 2, 3, 2, 3, 3])
     rdm_values = np.array([10, 20, 30, 40, 50, 60])

@@ -45,14 +45,14 @@ def main():
         sys.exit(1)
 
     #######################
-    #   LOAD / PREP FMRI
+    #   LOAD / PREP FMRI    STAGE <1>
     #######################
     fmri_data = prepare_fmri_data(
         root_data_dir=f"{args.root_dir}/{clip_config.ROOT_DATA_DIR}",  # we create the full directory path, so Shortcut path + data directory, e.g. "mini_data_for_python"
     )
 
     #######################
-    # CREATE AND VISUALIZE RDM
+    #   CREATE AND VISUALIZE RDM
     #######################
     rdm = create_rdm(fmri_data, metric=clip_config.METRIC)  # e.g. correlation, euclidean
     # Plot a subset of the RDM for visualization and values distribution of the full RDM
@@ -66,7 +66,7 @@ def main():
     analyze_rdm(rdm, images)
 
     #######################
-    #     CLIP EMBEDDINGS
+    #   CLIP EMBEDDINGS    STAGE <2>
     #######################
     device = "cuda" if torch.cuda.is_available() else "cpu"
     embeddings = get_image_embeddings(
@@ -76,13 +76,13 @@ def main():
     )
 
     #######################
-    #      START TRAINING
+    #   START TRAINING    STAGE <3>
     #######################
     row_indices, col_indices, rdm_values = generate_pair_indices(rdm)
     train_loss, train_acc, test_loss, test_acc = train_all(row_indices, col_indices, rdm_values, embeddings, device)
     #######################
-    #    PLOT TRAINING CURVES
-    #    NOTE: For KFOLD - we plot over N Folds (vs Standard training, over N Epochs)
+    #   PLOT TRAINING CURVES
+    #   NOTE: For KFOLD - we plot over N Folds (vs Standard training, over N Epochs)
     #######################
     all_plots(train_loss, train_acc, test_loss, test_acc)
 

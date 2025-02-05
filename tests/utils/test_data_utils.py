@@ -112,8 +112,7 @@ def test_prepare_fmri_data(tmp_path, monkeypatch):
     monkeypatch.setattr(clip_config, "SUBJECT", subj)
 
     fmri_data = prepare_fmri_data(str(tmp_path), desired_image_number=4)
-    # The expected data is the concatenation of lh and rh data (10 + 10 = 20 columns)
-    # with the number of rows equal to desired_image_number.
+    # The expected data is the concatenation of lh and rh data (10 + 10 = 20 columns).
     expected_shape = (desired_image_number, 20)
     assert fmri_data.shape == expected_shape
 
@@ -237,12 +236,7 @@ def test_create_rdm_from_vectors():
 
     For 3 images, the vector length should be 3 and the expected RDM should be symmetric.
     """
-    # For 3 images, the expected upper triangular values (excluding the diagonal)
-    # are provided in order. For example, if vectors = [1, 2, 3],
-    # the expected RDM is:
-    # [[0, 1, 2],
-    #  [1, 0, 3],  # noqa: ERA001
-    #  [2, 3, 0]]
+    # For 3 images, the expected upper triangular values (excluding the diagonal) are provided in order.
     vectors = np.array([1, 2, 3])
     rdm_out = create_rdm_from_vectors(vectors)
     expected = np.array([[0, 1, 2], [1, 0, 3], [2, 3, 0]])
