@@ -26,8 +26,7 @@ def get_image_embeddings(
         # load embeddings from a file, not from scratch
         if clip_config.LOAD_EMBEDDINGS_FILE != "":
             logger.info("Loading embeddings from local file: %s", clip_config.LOAD_EMBEDDINGS_FILE)
-            # Load embeddings from configured file instead of recalculating
-            if is_thingsvision:  # process thingsvision embeddings with numpy
+            if is_thingsvision:  # process thingsvision embeddings
                 logger.info("Loading THINGSvision")
                 embeddings = np.load(clip_config.LOAD_EMBEDDINGS_FILE, allow_pickle=True).astype(np.float32)
             else:
@@ -36,8 +35,8 @@ def get_image_embeddings(
                 :desired_image_number
             ]  # Move to device (CPU/GPU) if needed
 
+        # load from scratch with CLIP model and provided directory
         else:
-            # load from scratch with CLIP model and provided directory
             logger.info("Loading embeddings from scratch")
             logger.info("Loading CLIP Model: %s", clip_config.PRETRAINED_MODEL)
 

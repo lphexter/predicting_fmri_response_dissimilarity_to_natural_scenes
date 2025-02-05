@@ -147,7 +147,7 @@ def reconstruct_predicted_rdm(model, embeddings, row_indices, col_indices, devic
 
     dummy_y = np.zeros(len(row_indices), dtype=np.float32)
     dataset = PairDataset(embeddings, (row_indices, col_indices), dummy_y)
-    loader = DataLoader(dataset, batch_size=32, shuffle=False)
+    loader = DataLoader(dataset, batch_size=clip_config.BATCH_SIZE, shuffle=False)
 
     model.eval()
     preds_list = []

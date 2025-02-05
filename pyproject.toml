@@ -52,36 +52,31 @@ extend-exclude = [
 target-version = "py310"
 lint.select = ["ALL"]
 lint.ignore = [
-    "COM812",   # Conflicts with the formatter
-    "ISC001",   # Conflicts with the formatter
-    "PT001",    # https://github.com/astral-sh/ruff/issues/8796#issuecomment-1825907715
-    "PT023",    # https://github.com/astral-sh/ruff/issues/8796#issuecomment-1825907715
-    "D415",     # Docstring can end without ./!
-    "D416",     # Docstring Return can end without :
-    "T201", # print statements
-    "N802", # need to use provided func names which are camelCase
-    "ANN001", # skip type annotation
-    "UP031", # remove string format to allow for regex
-    "PD901", # be able to use 'df' name
-    "ANN201", # ignore return types
-    "E501", # ignore line too long
-    "D103", # ignore docstrings
-    "PLR2004", # ignore magic number
-    "PTH118", # ignore Path module requirement
-    "D104", # ignore docstring
-    "D100", # ignore docstring
-    "ANN202",
-    "ANN204", 
-    "D105",
-    "N806",
-    "D107", # ignore docstring for __init__
-    "D102", # ignore docstring in public method
-    "TID252", # allow relative imports
-    "INP001", # allow implicit packages
-    "TRY301", # ignore error message handling issues
-    "TRY003", # more errror message handling
-    "EM101", # error msg as literal string
-    "EM102", # error msg as literal string pt 2
+    "COM812",  # Conflicts with the formatter
+    "ISC001",  # Conflicts with the formatter
+    "PT001",   # https://github.com/astral-sh/ruff/issues/8796#issuecomment-1825907715
+    "PT023",   # https://github.com/astral-sh/ruff/issues/8796#issuecomment-1825907715
+    "D415",    # Docstring can end without ./!
+    "D416",    # Docstring Return can end without :
+    "ANN001",  # Allow missing type annotations for function arguments.
+    "ANN201",  # Allow missing type annotations for function return types.
+    "E501",    # Ignore warnings for lines exceeding the character limit (too long lines).
+    "D103",    # Do not enforce docstrings in public functions.
+    "PTH118",  # Do not require using `Path` objects instead of `os.path` functions.
+    "D104",    # Do not enforce docstrings in public packages (e.g., `__init__.py`).
+    "D100",    # Do not enforce module-level docstrings.
+    "ANN202",  # Allow missing type annotations for class methods (`self` and `cls` params).
+    "ANN204",  # Allow missing type annotations for `__call__` methods.
+    "D105",    # Do not enforce docstrings in magic (dunder) methods like `__str__`, `__repr__`.
+    "N806",    # Allow variable names to be uppercase for ML conventions like X as input data (normally, Ruff enforces lowercase for variables).
+    "D107",    # Do not enforce docstrings in `__init__` constructors.
+    "D102",    # Do not enforce docstrings in public instance methods.
+    "TID252",  # Allow relative imports (e.g., `from .module import foo`).
+    "INP001",  # Allow implicit namespace packages (don't require `__init__.py` in packages).
+    "TRY301",  # Allow using `raise Exception("msg")` instead of requiring `raise from` syntax.
+    "TRY003",  # Do not enforce explicitly capturing exception instances in `except` clauses.
+    "EM101",   # Allow using raw string literals for error messages instead of formatting.
+    "EM102",   # Allow using raw string literals for exception messages (same as `EM101`).
 ]
 
 [tool.ruff.lint.per-file-ignores]
