@@ -12,7 +12,7 @@ The goal of this project is to predict how different our brain response will be 
 Based on the literature we assume that it is possible to predict a stimulus given an fMRI response (decoding), or vice versa, predicting the fMRI response given a stimulus (encoding).
 Moreover, the similarity between brain responses and Machine Learning (ML) models has also been explored, and moderately high correlations have been reported. Specifically, the paper *THINGSvision: A Python Toolbox for Streamlining the Extraction of Activations From Deep Neural Networks* explores the correlation between various pretrained model embeddings and fMRI responses. The authors noted high correlation between a few models, namely CLIP-ViT, and actual fMRI responses, giving us the basis to begin our prediction work.
 
-Based on these assumptions we hypothesise that our novel approach could result successful: **to build an ML model capable of predicting how dissimilarly a given brain region in the visual cortex will process two different images.**
+Based on these assumptions we hypothesize that our novel approach could result successful: **to build an ML model capable of predicting how dissimilarly a given brain region in the visual cortex will process two different images.**
 
 Two different ML model architectures were explored, the first consists of a **simple 2-Layer Siamese CNN,** which did not succeed to get encouraging results. The second one consists of a **Multi-Layer Perceptron model** that takes two concatenated embeddings as input, corresponding to each pair of images, which are obtained using a pretrained model.
 
