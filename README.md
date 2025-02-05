@@ -151,9 +151,8 @@ Cases like package installation interuppted in the middle or something like that
 3. repeat 'On first run' steps
 
 
-## Health check (Lint):
-#### Lint Project:
-Check formatting, type hinting, lint code & docstrings
+### Running Tox - Tests and Linting:
+Check formatting, type hinting, lint code & docstrings. Run tests.
 ```bash
-tox run
+tox
 ```
