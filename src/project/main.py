@@ -25,6 +25,26 @@ from .utils.visualizations import all_plots, plot_accuracy_vs_layers, plot_rdm_d
 
 
 def main():
+    """Main function for running the pipeline for predicting fMRI response dissimilarity to pairs of images.
+
+    This script performs the following steps:
+    1. Parses command-line arguments to configure the experiment.
+    2. Loads and prepares fMRI data.
+    3. Computes the Representational Dissimilarity Matrix (RDM) and visualizes it.
+    4. Extracts CLIP or THINGSvision embeddings for the images.
+    5. Trains models using the extracted embeddings and RDM values.
+    6. Plots training curves and evaluation metrics.
+    7. Optionally performs a layer sweep to evaluate the effect of hidden layers on accuracy.
+
+    Command-line Arguments:
+        --root_dir (str): Path to the root data directory.
+        --thingsvision (bool): Flag to use THINGSvision embeddings instead of CLIP.
+
+    Outputs:
+        - Visualizations of the RDM and training performance.
+        - Trained models for predicting RDM values.
+        - Accuracy vs. hidden layers plot if layer sweep is enabled.
+    """
     # Parse command-line arguments
     parser = argparse.ArgumentParser(description="CLIP + PyTorch Pipeline for RDM Modeling")
     parser.add_argument(

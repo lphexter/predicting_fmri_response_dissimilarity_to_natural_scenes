@@ -14,6 +14,16 @@ from .pytorch_data import PairDataset, prepare_data_for_kfold, train_test_split_
 
 
 def compute_accuracy(predictions, targets, metric=clip_config.ACCURACY):
+    """Computes the accuracy of predictions based on the specified metric.
+
+    Args:
+        predictions (torch.Tensor): The model's predicted values.
+        targets (torch.Tensor): The ground truth target values.
+        metric (str, optional): The metric to use for accuracy calculation.
+
+    Returns:
+        float: The computed accuracy based on the specified metric.
+    """
     pred_np = predictions.detach().cpu().numpy()
     targ_np = targets.detach().cpu().numpy()
 
@@ -27,6 +37,18 @@ def compute_accuracy(predictions, targets, metric=clip_config.ACCURACY):
 
 
 def train_epoch(model, train_loader, criterion, optimizer, device):
+    """Trains the model for one epoch.
+
+    Args:
+        model (torch.nn.Module): The neural network model.
+        train_loader (torch.utils.data.DataLoader): DataLoader for training data.
+        criterion (torch.nn.Module): Loss function.
+        optimizer (torch.optim.Optimizer): Optimizer for training.
+        device (torch.device): Device to run the model on (CPU/GPU).
+
+    Returns:
+        tuple with loss and accuracy average per epoch: (epoch_loss, epoch_accuracy)
+    """
     model.train()
     running_loss = 0.0
     running_accuracy = 0.0
@@ -55,6 +77,17 @@ def train_epoch(model, train_loader, criterion, optimizer, device):
 
 
 def validate_epoch(model, test_loader, criterion, device):
+    """Evaluates the model on the validation/test dataset.
+
+    Args:
+        model (torch.nn.Module): The trained neural network model.
+        test_loader (torch.utils.data.DataLoader): DataLoader for validation/test data.
+        criterion (torch.nn.Module): Loss function.
+        device (torch.device): Device to run the model on (CPU/GPU).
+
+    Returns:
+        tuple with loss and accuracy average per epoch: (epoch_loss, epoch_accuracy)
+    """
     model.eval()
     running_loss = 0.0
     running_accuracy = 0.0
@@ -80,6 +113,20 @@ def validate_epoch(model, test_loader, criterion, device):
 
 
 def train_model(model, train_loader, test_loader, criterion, optimizer, device, num_epochs=clip_config.EPOCHS):  # noqa: PLR0913
+    """Trains the model over multiple epochs and evaluates it at each epoch.
+
+    Args:
+        model (torch.nn.Module): The neural network model.
+        train_loader (torch.utils.data.DataLoader): DataLoader for training data.
+        test_loader (torch.utils.data.DataLoader): DataLoader for validation/test data.
+        criterion (torch.nn.Module): Loss function.
+        optimizer (torch.optim.Optimizer): Optimizer for training.
+        device (torch.device): Device to run the model on (CPU/GPU).
+        num_epochs (int, optional): Number of training epochs.
+
+    Returns:
+        tuple: Lists containing loss and accuracy history.
+    """
     train_loss_history = []
     train_accuracy_history = []
     test_loss_history = []
@@ -108,6 +155,18 @@ def train_model(model, train_loader, test_loader, criterion, optimizer, device, 
 
 
 def train_model_kfold(loaders, criterion, device, num_layers=clip_config.HIDDEN_LAYERS, num_epochs=clip_config.EPOCHS):
+    """Trains the model using k-fold cross-validation.
+
+    Args:
+        loaders (list of tuples): A list containing (train_loader, test_loader) for each fold.
+        criterion (torch.nn.Module): Loss function.
+        device (torch.device): Device to run the model on (CPU/GPU).
+        num_layers (int, optional): Number of hidden layers in the model.
+        num_epochs (int, optional): Number of training epochs per fold.
+
+    Returns:
+        tuple: Lists containing loss and accuracy history across folds.
+    """
     train_loss_history = []
     train_accuracy_history = []
     test_loss_history = []
@@ -142,6 +201,18 @@ def train_model_kfold(loaders, criterion, device, num_layers=clip_config.HIDDEN_
 
 
 def reconstruct_predicted_rdm(model, embeddings, row_indices, col_indices, device):
+    """Reconstructs a predicted Representational Dissimilarity Matrix (RDM) using the trained model.
+
+    Args:
+        model (torch.nn.Module): The trained neural network model.
+        embeddings (torch.Tensor): Embedding vectors.
+        row_indices (numpy.ndarray): Row indices of the pairs.
+        col_indices (numpy.ndarray): Column indices of the pairs.
+        device (torch.device): Device to run the model on (CPU/GPU).
+
+    Returns:
+        numpy.ndarray: The reconstructed predicted RDM.
+    """
     N = embeddings.shape[0]
     predicted_rdm = np.zeros((N, N), dtype=np.float32)
 
@@ -167,6 +238,19 @@ def reconstruct_predicted_rdm(model, embeddings, row_indices, col_indices, devic
 
 
 def train_all(row_indices, col_indices, rdm_values, embeddings, device, hidden_layers=clip_config.HIDDEN_LAYERS):  # noqa: PLR0913
+    """Trains the model using either standard training or k-fold cross-validation.
+
+    Args:
+        row_indices (numpy.ndarray): Row indices of the pairs.
+        col_indices (numpy.ndarray): Column indices of the pairs.
+        rdm_values (numpy.ndarray): Target values for each pair.
+        embeddings (torch.Tensor): Embedding vectors.
+        device (torch.device): Device to run the model on (CPU/GPU).
+        hidden_layers (int, optional): Number of hidden layers in the model.
+
+    Returns:
+        tuple: Lists containing loss and accuracy history.
+    """
     criterion = nn.MSELoss()
 
     try:

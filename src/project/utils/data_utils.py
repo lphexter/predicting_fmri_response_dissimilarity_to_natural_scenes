@@ -95,6 +95,18 @@ def prepare_fmri_data(  # noqa: PLR0912, C901
     roi=clip_config.ROI,
     region_class=clip_config.REGION_CLASS,
 ):
+    """Loads and processes fMRI data for a given subject and region of interest (ROI).
+
+    Args:
+        root_data_dir (str): Root directory containing the fMRI dataset.
+        subj (int, optional): Subject number.
+        desired_image_number (int, optional): Number of images to process.
+        roi (str, optional): Specific region of interest.
+        region_class (str, optional): Category of brain regions.
+
+    Returns:
+        np.ndarray: Scaled fMRI data corresponding to the selected ROIs.
+    """
     fmri_dir = os.path.join(root_data_dir, f"subj0{subj}", "training_split", "training_fmri")
     lh_fmri = np.load(os.path.join(fmri_dir, "lh_training_fmri.npy"))
     rh_fmri = np.load(os.path.join(fmri_dir, "rh_training_fmri.npy"))
@@ -183,6 +195,17 @@ def prepare_fmri_data(  # noqa: PLR0912, C901
 
 # return high, low, and closest to 1 values of the RDM along with their pairs
 def analyze_rdm(rdm, images, metric=clip_config.METRIC):
+    """Analyzes the Representational Dissimilarity Matrix (RDM) by identifying the highest,
+    lowest, and (if applicable) closest-to-1 dissimilarity values.
+
+    Args:
+        rdm (np.ndarray): The computed RDM matrix.
+        images (list): List of images corresponding to the dataset.
+        metric (str, optional): Similarity metric used.
+
+    Returns:
+        None
+    """
     try:
         all_metrics = {}
 
@@ -230,6 +253,15 @@ def analyze_rdm(rdm, images, metric=clip_config.METRIC):
 
 # not used in main.py - for initial testing, kept for tracking
 def compare_rdms(raw_rdm, features_rdm):
+    """Computes Pearson and Spearman correlation coefficients between two RDMs.
+
+    Args:
+        raw_rdm (np.ndarray): Ground truth RDM.
+        features_rdm (np.ndarray): RDM computed from extracted features.
+
+    Returns:
+        None
+    """
     upper_tri_indices = np.triu_indices(features_rdm.shape[0], k=1)
 
     features_upper_tri = features_rdm[upper_tri_indices]
@@ -243,6 +275,15 @@ def compare_rdms(raw_rdm, features_rdm):
 
 
 def create_rdm(roi_data, metric="correlation"):
+    """Creates an RDM from ROI data using a specified metric.
+
+    Args:
+        roi_data (np.ndarray): Data extracted from the selected brain regions.
+        metric (str, optional): Distance metric for RDM computation.
+
+    Returns:
+        np.ndarray: The computed RDM.
+    """
     distances = pdist(roi_data, metric=metric)
     rdm = squareform(distances)
     try:
@@ -262,6 +303,18 @@ def create_rdm(roi_data, metric="correlation"):
 
 # Image preprocessing
 def preprocess_images(image_dir, num_images, new_width, new_height):
+    """Loads, resizes, and normalizes images from a directory.
+
+    Args:
+        image_dir (str): Path to the image directory.
+        num_images (int): Number of images to process.
+        new_width (int): Width to resize images to.
+        new_height (int): Height to resize images to.
+
+    Returns:
+        np.ndarray: Normalized image data.
+    """
+
     def min_max_norm(X):  # noqa: N803
         X = np.array(X, dtype=np.float32)
         return (X - X.min()) / (X.max() - X.min() + 1e-8)
@@ -279,6 +332,15 @@ def preprocess_images(image_dir, num_images, new_width, new_height):
 
 
 def prepare_data_for_cnn(rdm, test_size=0.2):
+    """Prepares data pairs and labels for training a CNN using the RDM.
+
+    Args:
+        rdm (np.ndarray): The computed RDM matrix.
+        test_size (float, optional): Fraction of data used for testing.
+
+    Returns:
+        tuple: Training and testing indices for the CNN model.
+    """
     from sklearn.model_selection import train_test_split
 
     num_images = rdm.shape[0]
@@ -295,6 +357,17 @@ def prepare_data_for_cnn(rdm, test_size=0.2):
 
 
 def data_generator(image_data, pair_indices, y_data, batch_size=clip_config.BATCH_SIZE):
+    """Generator function that yields batches of paired image data and labels for training.
+
+    Args:
+        image_data (np.ndarray): The dataset of image data.
+        pair_indices (tuple): Tuple containing row and column indices for image pairs.
+        y_data (np.ndarray): Labels corresponding to image pairs.
+        batch_size (int, optional): Number of samples per batch.
+
+    Yields:
+        tuple: Batch of paired images and labels.
+    """
     num_samples = len(y_data)
     row_indices, col_indices = pair_indices
 
@@ -317,6 +390,14 @@ def data_generator(image_data, pair_indices, y_data, batch_size=clip_config.BATC
 
 # Create an RDM from a row vector of predictions for visualization/analysis
 def create_rdm_from_vectors(vectors):
+    """Converts a 1D vector of pairwise dissimilarity values into an RDM matrix.
+
+    Args:
+        vectors (np.ndarray): Pairwise dissimilarity values.
+
+    Returns:
+        np.ndarray: Square RDM matrix.
+    """
     num_images = int(np.sqrt(len(vectors) * 2)) + 1
     rdm_out = np.zeros((num_images, num_images))
     idx = 0
