@@ -195,16 +195,14 @@ def prepare_fmri_data(  # noqa: PLR0912, C901
 
 # return high, low, and closest to 1 values of the RDM along with their pairs
 def analyze_rdm(rdm, images, metric=clip_config.METRIC):
-    """Analyzes the Representational Dissimilarity Matrix (RDM) by identifying the highest,
-    lowest, and (if applicable) closest-to-1 dissimilarity values.
+    """Analyzes the Representational Dissimilarity Matrix (RDM).
+
+    Identifies the highest, lowest, and (if applicable) closest-to-1 dissimilarity values.
 
     Args:
         rdm (np.ndarray): The computed RDM matrix.
         images (list): List of images corresponding to the dataset.
         metric (str, optional): Similarity metric used.
-
-    Returns:
-        None
     """
     try:
         all_metrics = {}
@@ -258,9 +256,6 @@ def compare_rdms(raw_rdm, features_rdm):
     Args:
         raw_rdm (np.ndarray): Ground truth RDM.
         features_rdm (np.ndarray): RDM computed from extracted features.
-
-    Returns:
-        None
     """
     upper_tri_indices = np.triu_indices(features_rdm.shape[0], k=1)
 
