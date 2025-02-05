@@ -241,8 +241,6 @@ def compare_rdms(raw_rdm, features_rdm):
     corr, _ = spearmanr(features_upper_tri, rdm_upper_tri)
     logger.info("Spearman Correlation between features RDM (upper tri) and true RDM (upper tri): %s", corr)
 
-    corr, _ = spearmanr(features_upper_tri, rdm_upper_tri)
-
 
 def create_rdm(roi_data, metric="correlation"):
     distances = pdist(roi_data, metric=metric)
