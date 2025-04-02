@@ -329,7 +329,7 @@ def create_binary_rdm(rdm, metric="correlation"):
 #############################################
 
 
-def preprocess_images(image_dir, num_images, new_width, new_height):
+def preprocess_images(image_dir, num_images, new_width, new_height, grayscale=True):  # noqa: FBT002
     """Loads, resizes, and normalizes images from a directory.
 
     Args:
@@ -337,6 +337,7 @@ def preprocess_images(image_dir, num_images, new_width, new_height):
         num_images (int): Number of images to process.
         new_width (int): Width to resize images to.
         new_height (int): Height to resize images to.
+        grayscale (boolean): Convert images to grayscale, default to True.
 
     Returns:
         np.ndarray: Normalized image data.
@@ -351,7 +352,9 @@ def preprocess_images(image_dir, num_images, new_width, new_height):
 
     for image_file in tqdm(image_files[:num_images], desc="Resizing images"):
         image_path = os.path.join(image_dir, image_file)
-        img = Image.open(image_path).convert("L")
+        img = Image.open(image_path)
+        if grayscale:
+            img = img.convert("L")
         img = img.resize((new_width, new_height))
         image_data.append(np.array(img, dtype=np.float32))
 
@@ -419,7 +422,7 @@ def classify_images_rgb(images, threshold=0.7):
     return labels
 
 
-def load_color_map_files(color_map_files):
+def load_color_map_files(color_map_files, root_data_dir):
     """Loads and concatenates color map files.
 
     Args:
@@ -428,7 +431,7 @@ def load_color_map_files(color_map_files):
     Returns:
         np.ndarray: Concatenated color maps.
     """
-    file_list = [f.strip() for f in color_map_files.split(",")]
+    file_list = [f"{root_data_dir}/{f.strip()}" for f in color_map_files.split(",")]
     all_colors = None
     for file in file_list:
         color_map = np.load(file)
@@ -463,9 +466,8 @@ def get_equal_color_data(embeddings, roi_data, color_mask_list, desired_colors):
 
     # Extract indices for each desired color
     color1, color2 = desired_colors
-
-    indices1 = np.where(color_mask_list == color1)[0]
-    indices2 = np.where(color_mask_list == color2)[0]
+    indices1 = np.where((color_mask_list == color1) & (np.arange(len(color_mask_list)) < embeddings.shape[0]))[0]
+    indices2 = np.where((color_mask_list == color2) & (np.arange(len(color_mask_list)) < embeddings.shape[0]))[0]
 
     # Determine the minimum count to equalize the groups
     min_count = min(len(indices1), len(indices2))

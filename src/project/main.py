@@ -76,11 +76,13 @@ def main():
         logger.error(e)
         sys.exit(1)
 
+    root_data_dir = f"{args.root_dir}/{clip_config.ROOT_DATA_DIR}"
+
     #######################
     #   LOAD / PREP FMRI    STAGE <1>
     #######################
     fmri_data = prepare_fmri_data(
-        root_data_dir=f"{args.root_dir}/{clip_config.ROOT_DATA_DIR}",  # we create the full directory path, so Shortcut path + data directory, e.g. "mini_data_for_python"
+        root_data_dir=root_data_dir,  # we create the full directory path, so Shortcut path + data directory, e.g. "mini_data_for_python"
     )
     #######################
     #   CLIP EMBEDDINGS    STAGE <2>
@@ -95,17 +97,21 @@ def main():
 
     if clip_config.DISTRIBUTION_TYPE == "colors":
         if len(clip_config.COLOR_ARRAY_MAP_FILES) > 0:  # load color map from file
-            color_mask_list = load_color_map_files(clip_config.COLOR_ARRAY_MAP_FILES)
+            color_mask_list = load_color_map_files(clip_config.COLOR_ARRAY_MAP_FILES, root_data_dir)
         else:  # load color map from scratch
-            image_dir = f"algonauts_2023_tutorial_data/subj0{clip_config.SUBJECT}/training_split/training_images"
-            images = preprocess_images(
-                image_dir, clip_config.DESIRED_IMAGE_NUMBER, clip_config.NEW_WIDTH, clip_config.NEW_HEIGHT
+            image_dir = f"{root_data_dir}/subj0{clip_config.SUBJECT}/training_split/training_images"
+            images_to_classify = preprocess_images(
+                image_dir,
+                clip_config.DESIRED_IMAGE_NUMBER,
+                clip_config.NEW_WIDTH,
+                clip_config.NEW_HEIGHT,
+                grayscale=False,
             )
-            color_mask_list = classify_images_rgb(images, threshold=0.70)
+            color_mask_list = classify_images_rgb(images_to_classify, threshold=0.70)
             print_image_counts(color_mask_list)
+            # Sanity check - show images classified as blue
             display_images_by_label(images, color_mask_list, label_to_show=0, num_images=10)
         fmri_data, embeddings = get_equal_color_data(embeddings, fmri_data, color_mask_list, clip_config.COLOR_PAIR)
-
     #######################
     #   CREATE AND VISUALIZE RDM
     #######################

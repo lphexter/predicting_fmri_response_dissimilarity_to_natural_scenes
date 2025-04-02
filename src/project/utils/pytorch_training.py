@@ -375,12 +375,21 @@ def train_or_load_svm(
     save_model_file_name=clip_config.SAVE_SVM_MODEL_PATH,
 ):
     if model_to_load != "":
-        clf = joblib.load(model_to_load)
+        try:
+            clf = joblib.load(model_to_load)
+        except Exception as e:
+            raise RuntimeError(f"Failed to load model from {model_to_load}: {e}") from e
     else:
+        unique_classes = set(y_train)
+        if len(unique_classes) < 2:
+            raise ValueError("Training failed: y_train must have at least two unique classes.")
         clf = SVC(degree=clip_config.DEGREE, kernel=clip_config.KERNEL)
         clf.fit(X_train, y_train)
         if save_model_file_name != "":
-            joblib.dump(clf, save_model_file_name)
+            try:
+                joblib.dump(clf, save_model_file_name)
+            except Exception as e:
+                raise RuntimeError(f"Failed to save model to {save_model_file_name}: {e}") from e
 
     return clf
 
