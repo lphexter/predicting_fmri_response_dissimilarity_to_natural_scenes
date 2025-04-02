@@ -2,7 +2,7 @@
 
 import torch
 import torch.nn.functional as F  # noqa: N812
-from torch import nn
+from torch import cat, nn
 
 
 # not used in main.py - for initial testing, kept for tracking
@@ -69,3 +69,37 @@ class DynamicLayerSizeNeuralNetwork(nn.Module):
         if self.activation_func == "sigmoid":
             return torch.sigmoid(x) * 2
         return x
+
+
+# Define Contrastive Learning Network
+class ContrastiveNetwork(nn.Module):
+    def __init__(self, input_dim, dropout_percentage=0.5):
+        super().__init__()
+        self.feature_extractor = nn.Sequential(
+            nn.Linear(input_dim, 512), nn.ReLU(), nn.Dropout(p=dropout_percentage), nn.Linear(512, 256), nn.ReLU()
+        )
+        # Add a layer to compute similarity from the extracted features
+        self.similarity_head = nn.Sequential(
+            nn.Linear(256 * 2, 128),  # Takes concatenated features
+            nn.ReLU(),
+            nn.Linear(128, 1),  # Outputs a single similarity score
+        )
+
+    def forward(self, emb1, emb2):
+        z1 = self.feature_extractor(emb1)
+        z2 = self.feature_extractor(emb2)
+        # Concatenate features and pass through similarity head
+        merged = cat([z1, z2], dim=1)
+        return self.similarity_head(merged)
+
+
+# Contrastive Loss Function
+def contrastive_loss(model, emb1, emb2, true_similarity):
+    """Compute a custom loss function for similarity prediction"""
+    # Get predicted similarity score from the model (modified)
+    similarity_score = model(emb1, emb2).squeeze(1)  # The model already outputs the similarity score
+
+    # Loss based on the difference between true similarity and predicted similarity
+    loss = F.mse_loss(similarity_score, true_similarity)  # Use MSE to train similarity
+
+    return similarity_score, loss  # Return the similarity score and loss
