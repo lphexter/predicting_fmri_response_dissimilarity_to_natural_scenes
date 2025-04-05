@@ -130,7 +130,7 @@ python3.10 -m src.project.dep2_main --root_dir "/absolute/path/to/Google/Drive/S
 ```
 ##### Note - to use THINGSvision features, update the above command for the second model with the optional flag `--thingsvision`
 
-#### Third model (Constrastive Siamese Network)
+#### Third/Fourth models (SVM, Constrastive Siamese Network)
 ```bash 
 python3.10 -m src.project.main --root_dir "/absolute/path/to/Google/Drive/Shortcut"
 ```
