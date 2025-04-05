@@ -361,18 +361,31 @@ def preprocess_images(image_dir, num_images, new_width, new_height, grayscale=Tr
 
 
 def closest_color(pixel, color_map):
-    """Return color classification
+    """Return color classification or None if ambiguous.
 
     Given a pixel (R, G, B) and a dictionary of named colors (RGB),
     returns the name of the color that is closest in Euclidean distance.
+    If there is a tie (i.e. more than one color is equally close),
+    returns None to indicate ambiguity.
+
+    Args:
+        pixel (np.ndarray): An array representing the pixel's RGB values.
+        color_map (dict): A dictionary mapping color names to their RGB values.
+
+    Returns:
+        str or None: The name of the closest color, or None if there's a tie.
     """
     distances = {}
     for color_name, color_rgb in color_map.items():
         dist = np.linalg.norm(pixel - color_rgb)
         distances[color_name] = dist
 
-    # Return the color with the minimum distance
-    return min(distances, key=distances.get)
+    min_distance = min(distances.values())
+    winners = [color for color, d in distances.items() if d == min_distance]
+
+    if len(winners) > 1:
+        return None
+    return winners[0]
 
 
 def classify_images_rgb(images, threshold=0.7):
@@ -401,7 +414,8 @@ def classify_images_rgb(images, threshold=0.7):
 
         for pixel in pixels:
             color_name = closest_color(pixel, COLOR_MAP)
-            color_counts[color_name] += 1
+            if color_name is not None:
+                color_counts[color_name] += 1
 
         # Find which color is the majority for this image
         dominant_color = max(color_counts, key=color_counts.get)

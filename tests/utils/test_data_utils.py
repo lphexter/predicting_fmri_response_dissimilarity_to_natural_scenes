@@ -1,19 +1,147 @@
 import numpy as np
+import pytest
 from PIL import Image
 
 from project.config import clip_config
 from project.utils import data_utils
 from project.utils.data_utils import (
+    COLOR_MAP,
     _get_concatenated_roi_data,
     _get_fmri_voxels,
     analyze_rdm,
+    classify_images_rgb,
+    closest_color,
+    create_binary_rdm,
     create_rdm,
     create_rdm_from_vectors,
     data_generator,
+    get_equal_color_data,
+    load_color_map_files,
     prepare_data_for_cnn,
     prepare_fmri_data,
     preprocess_images,
 )
+
+#########################################
+# NEW TESTS FOR UPDATED CODE FUNCTIONS
+#########################################
+
+
+def test_create_binary_rdm_correlation():
+    """Test create_binary_rdm for 'correlation' metric.
+
+    For correlation, values < 1 should be 'similar' and values >= 1 'dissimilar'.
+    """
+    rdm = np.array([[0, 0.5, 1.2], [0.5, 0, 0.8], [1.2, 0.8, 0]])
+    binary_rdm = create_binary_rdm(rdm, metric="correlation")
+    expected = np.array(
+        [["similar", "similar", "dissimilar"], ["similar", "similar", "similar"], ["dissimilar", "similar", "similar"]]
+    )
+    np.testing.assert_array_equal(binary_rdm, expected)
+
+
+def test_create_binary_rdm_euclidean():
+    """Test create_binary_rdm for 'euclidean' metric.
+
+    The threshold is set as the median of non-zero values.
+    """
+    rdm = np.array([[0, 2, 4], [2, 0, 6], [4, 6, 0]])
+    # Non-zero values: [2, 4, 2, 6, 4, 6] → median = 4.
+    binary_rdm = create_binary_rdm(rdm, metric="euclidean")
+    # Values > 4 -> "dissimilar", values <= 4 -> "similar"
+    expected = np.array(
+        [["similar", "similar", "similar"], ["similar", "similar", "dissimilar"], ["similar", "dissimilar", "similar"]]
+    )
+    np.testing.assert_array_equal(binary_rdm, expected)
+
+
+def test_closest_color():
+    """Test closest_color for both a clearly dominant color and an ambiguous case.
+
+    For a clearly dominant pixel:
+      - The pixel [250, 10, 10] should be closest to "Red" in COLOR_MAP.
+
+    For an ambiguous pixel:
+      - The pixel [100, 100, 100] is equally distant from all colors, so the function should return None.
+    """
+    # Test a clearly dominant color
+    pixel_red = np.array([250, 10, 10])
+    result_red = closest_color(pixel_red, COLOR_MAP)
+    assert result_red == "Red", f"Expected 'Red', but got '{result_red}'."
+
+    # Test an ambiguous pixel
+    ambiguous_pixel = np.array([100, 100, 100])
+    result_ambiguous = closest_color(ambiguous_pixel, COLOR_MAP)
+    assert result_ambiguous is None, f"Expected None for ambiguous pixel, but got '{result_ambiguous}'."
+
+
+def test_classify_images_rgb():
+    """Test classify_images_rgb with synthetic images.
+
+    Create three images: one solid blue, one solid red, and one ambiguous.
+    The ambiguous image should be labeled as Unclassified (-1).
+    """
+    # Create solid color images.
+    blue_img = np.full((10, 10, 3), [0, 0, 255], dtype=np.uint8)
+    red_img = np.full((10, 10, 3), [255, 0, 0], dtype=np.uint8)
+    ambiguous_img = np.full((10, 10, 3), [100, 100, 100], dtype=np.uint8)
+    images = [blue_img, red_img, ambiguous_img]
+    labels = classify_images_rgb(images, threshold=0.7)
+    expected = np.array(
+        [
+            clip_config.COLOR_TO_LABEL["Blue"],
+            clip_config.COLOR_TO_LABEL["Red"],
+            clip_config.COLOR_TO_LABEL["Unclassified"],  # Ambiguous
+        ]
+    )
+    np.testing.assert_array_equal(labels, expected)
+
+
+def test_load_color_map_files(tmp_path):
+    """Test load_color_map_files by creating dummy color map files.
+
+    Two files containing small numpy arrays are created and then concatenated.
+    """
+    root_data_dir = str(tmp_path)
+    file1 = tmp_path / "map1.npy"
+    file2 = tmp_path / "map2.npy"
+    arr1 = np.array([[1, 2], [3, 4]])
+    arr2 = np.array([[5, 6]])
+    np.save(file1, arr1)
+    np.save(file2, arr2)
+    color_map_files = f"{file1.name}, {file2.name}"
+
+    # Change directory to tmp_path so that os.path.join works as expected.
+    monkeypatch = pytest.MonkeyPatch()
+    monkeypatch.chdir(tmp_path)
+    combined = load_color_map_files(color_map_files, root_data_dir)
+    expected = np.concatenate([arr1, arr2], axis=0)
+    assert combined.shape == expected.shape
+    np.testing.assert_array_equal(combined, expected)
+    monkeypatch.undo()
+
+
+def test_get_equal_color_data():
+    """Test get_equal_color_data to ensure balanced selection of two color classes.
+
+    Creates dummy embeddings, ROI data, and a color mask list, and verifies that the returned
+    arrays have equal numbers of samples from the specified classes.
+    """
+    embeddings = np.arange(20).reshape(10, 2)  # 10 samples, 2 features
+    roi_data = np.arange(30).reshape(10, 3)  # 10 samples, 3 features
+    # Assign first 6 samples to Blue (0) and next 4 samples to Red (1)
+    color_mask_list = np.array([0] * 6 + [1] * 4)
+    # Desired colors: Blue ('B') and Red ('R')
+    combined_roi_data, combined_embeddings = get_equal_color_data(embeddings, roi_data, color_mask_list, ("B", "R"))
+    # The minimum count between the two classes is 4, so expect 8 samples in total.
+    assert combined_embeddings.shape[0] == 8
+    assert combined_roi_data.shape[0] == 8
+
+    # Verify that the selected indices correspond to the first 4 samples of each class.
+    expected_indices = np.concatenate((np.arange(4), np.arange(6, 10)))
+    np.testing.assert_array_equal(combined_embeddings, embeddings[expected_indices])
+    np.testing.assert_array_equal(combined_roi_data, roi_data[expected_indices])
+
 
 #########################################
 # fMRI DATA LOADING & ROI HANDLING TESTS

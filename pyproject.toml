@@ -30,7 +30,8 @@ ds = [
     "matplotlib==3.10.0",
     "seaborn==0.13.2",
     "pytest",
-    "Pillow"
+    "Pillow",
+    "joblib"
 ]
 lint = [
     "mypy",

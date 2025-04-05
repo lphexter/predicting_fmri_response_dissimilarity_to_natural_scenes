@@ -6,14 +6,131 @@ from torch.utils.data import DataLoader, TensorDataset
 
 from project.config import clip_config
 from project.utils import pytorch_training
+from project.utils.pytorch_data import PairedData
 from project.utils.pytorch_training import (
     compute_accuracy,
+    compute_mse_chance_metrics,
     reconstruct_predicted_rdm,
+    run_kfold_cv,
+    run_svm,
     train_all,
     train_epoch,
+    train_fold,
     train_model,
+    train_or_load_svm,
     validate_epoch,
 )
+
+
+###############
+## CONTRASTIVE SIAMESE NETWORK TESTS
+###############
+class DummyContrastive(nn.Module):
+    """A dummy contrastive model that always returns a constant similarity score."""
+
+    def __init__(self, constant=0.5):
+        super().__init__()
+        self.constant = constant
+        self.dummy_param = nn.Parameter(torch.tensor(constant))
+
+    def forward(self, emb1, _):
+        batch_size = emb1.size(0)
+        return self.dummy_param * torch.ones((batch_size, 1), device=emb1.device)
+
+
+def get_dummy_contrastive_loader(num_samples=4, input_dim=10, batch_size=2):
+    """Creates a dummy DataLoader for contrastive training with random tensors."""
+    emb1 = torch.randn(num_samples, input_dim)
+    emb2 = torch.randn(num_samples, input_dim)
+    true_distance = torch.full((num_samples,), 0.5)
+    dataset = torch.utils.data.TensorDataset(emb1, emb2, true_distance)
+    return DataLoader(dataset, batch_size=batch_size)
+
+
+def test_run_kfold_cv(monkeypatch):
+    """Test run_kfold_cv executes without error using dummy data.
+
+    Monkeypatch plotting functions to suppress output.
+    """
+    device = "cpu"
+    # Create dummy embeddings for 5 images.
+    embeddings = np.random.rand(5, 10)
+    # Create dummy RDMs.
+    rdm = np.random.rand(5, 5)
+    binary_rdm = np.where(rdm > 0.5, "dissimilar", "similar")
+    monkeypatch.setattr("project.utils.pytorch_training.plot_fold_results", lambda *_, **__: None)
+    monkeypatch.setattr("project.utils.pytorch_training.plot_cv_summary", lambda *_, **__: None)
+    # Run k-fold cv; we expect no errors.
+    run_kfold_cv(embeddings, binary_rdm, rdm, device, k=2)
+
+
+def test_compute_mse_chance_metrics():
+    """Test that compute_mse_chance_metrics computes the expected baseline MSE."""
+    y_true = np.array([1.0, 2.0, 3.0, 4.0])
+    baseline = np.mean(y_true)
+    expected_mse = np.mean((y_true - baseline) ** 2)
+    chance_mse, shuffled_mse = compute_mse_chance_metrics(y_true)
+    np.testing.assert_almost_equal(chance_mse, expected_mse, decimal=5)
+    assert isinstance(shuffled_mse, float)
+
+
+def test_train_fold():
+    """Test train_fold runs without error and returns float metrics using a dummy contrastive model."""
+    device = "cpu"
+    model = DummyContrastive(constant=0.5)
+    optimizer = optim.Adam(model.parameters(), lr=0.001)
+    train_loader = get_dummy_contrastive_loader(num_samples=4, input_dim=10, batch_size=2)
+    test_loader = get_dummy_contrastive_loader(num_samples=4, input_dim=10, batch_size=2)
+    metrics, _, _, _, _ = train_fold(model, optimizer, train_loader, test_loader, device)
+    # Check that metrics are floats
+    assert isinstance(metrics[0], float)
+    assert isinstance(metrics[1], float)
+
+
+#########################################
+# SVM TESTS
+#########################################
+
+
+def test_train_or_load_svm_training(tmp_path):
+    """Test train_or_load_svm when training a new SVM with dummy paired data."""
+    # Create dummy embeddings and trivial pair indices.
+    embeddings = np.random.rand(10, 5)
+    pair_indices = [(i, i) for i in range(10)]
+    paired_data = PairedData(embeddings, pair_indices)
+    # Create dummy y_train with two unique classes.
+    y_train = np.array([0, 1] * 5)
+    # Force training by setting model_to_load empty.
+    svm = train_or_load_svm(
+        paired_data, y_train, model_to_load="", save_model_file_name=str(tmp_path / "svm_model.pkl")
+    )
+    predictions = svm.predict(paired_data)
+    assert len(predictions) == len(paired_data)
+
+
+@pytest.mark.usefixtures("tmp_path")
+def test_run_svm(monkeypatch):
+    """Test run_svm runs without error by monkeypatching SVM training and plotting functions."""
+    embeddings = np.random.rand(10, 5)
+    rdm = np.random.rand(10, 10)
+    binary_rdm = np.where(rdm > 0.5, "dissimilar", "similar")
+
+    # Override train_or_load_svm to return a dummy SVM that predicts zeros.
+    class DummySVM:
+        def predict(self, data):
+            return np.zeros(len(data))
+
+    monkeypatch.setattr("project.utils.pytorch_training.train_or_load_svm", lambda _data, _y: DummySVM())
+    monkeypatch.setattr(
+        "project.utils.pytorch_training.plot_confusion_matrix_and_metrics",
+        lambda *_, **__: None,
+    )
+    run_svm(embeddings, rdm, binary_rdm)
+
+
+###############
+## OLD TESTS - MLP
+###############
 
 
 class DummyModel(nn.Module):
