@@ -14,7 +14,6 @@ from ..utils.visualizations import show_image_pair
 
 #    CONSTANTS FOR COLOR CLASSIFICATION
 COLOR_MAP = {"Blue": np.array([0, 0, 255]), "Red": np.array([255, 0, 0]), "Green": np.array([0, 255, 0])}
-COLOR_TO_LABEL = {"Blue": 0, "Red": 1, "Green": 2}
 
 
 #########################################
@@ -393,7 +392,7 @@ def classify_images_rgb(images, threshold=0.7):
     labels = np.full(len(images), -1, dtype=int)
 
     for idx, img in enumerate(images):
-        # Convert to float for distance calculations, reshape to (N, 3)
+        # Convert to float for distance calculations, reshape to (N, 3) because (R, G, B)
         pixels = img.reshape(-1, 3).astype(np.float32)
         total_pixels = len(pixels)
 
@@ -411,32 +410,44 @@ def classify_images_rgb(images, threshold=0.7):
         # Calculate the fraction of pixels for the dominant color
         fraction_dominant = dominant_count / total_pixels
 
-        # Check if it passes the threshold
         if fraction_dominant >= threshold:
-            # Assign the corresponding label (0,1,2)
-            labels[idx] = COLOR_TO_LABEL[dominant_color]
+            labels[idx] = clip_config.COLOR_TO_LABEL[dominant_color]
         else:
-            # Unclassified is -1
             labels[idx] = -1
 
     return labels
 
 
 def load_color_map_files(color_map_files, root_data_dir):
-    """Loads and concatenates color map files.
+    """Loads and concatenates color map files with pre-validation to minimize per-iteration try/except overhead.
 
     Args:
         color_map_files (str): Comma-separated file paths for np.load.
+        root_data_dir (str): Directory path of all color mask files.
 
     Returns:
         np.ndarray: Concatenated color maps.
+
+    Raises:
+        FileNotFoundError: If any file does not exist.
+        ValueError: If the loaded color maps cannot be concatenated.
+        Exception: For any other unexpected errors during file loading or concatenation.
     """
-    file_list = [f"{root_data_dir}/{f.strip()}" for f in color_map_files.split(",")]
-    all_colors = None
-    for file in file_list:
-        color_map = np.load(file)
-        all_colors = color_map if all_colors is None else np.concatenate((all_colors, color_map), axis=0)
-    return all_colors
+    # Build full file paths and validate existence upfront.
+    file_list = [os.path.join(root_data_dir, f.strip()) for f in color_map_files.split(",")]
+    missing_files = [file for file in file_list if not os.path.isfile(file)]  # noqa: PTH113
+    if missing_files:
+        raise FileNotFoundError(f"The following files were not found: {missing_files}")
+
+    try:
+        # Load all color maps.
+        color_maps = [np.load(file) for file in file_list]
+        # Concatenate the loaded color maps.
+        return np.concatenate(color_maps, axis=0)
+    except ValueError as e:
+        raise ValueError(f"Error concatenating color maps: {e}") from e
+    except Exception as e:
+        raise Exception(f"Unexpected error loading files: {e}") from e  # noqa: TRY002
 
 
 def get_equal_color_data(embeddings, roi_data, color_mask_list, desired_colors):

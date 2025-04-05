@@ -85,7 +85,7 @@ def main():
         root_data_dir=root_data_dir,  # we create the full directory path, so Shortcut path + data directory, e.g. "mini_data_for_python"
     )
     #######################
-    #   CLIP EMBEDDINGS    STAGE <2>
+    # GET EMBEDDINGS    STAGE <2>
     #######################
     device = "cuda" if torch.cuda.is_available() else "cpu"
     images = load_images(args.root_dir)

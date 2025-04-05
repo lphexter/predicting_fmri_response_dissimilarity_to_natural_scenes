@@ -6,6 +6,9 @@ from torch.utils.data import DataLoader, Dataset
 
 from ..config import clip_config
 
+MID_VALUE_MIN = 0.85
+MID_VALUE_MAX = 1.15
+
 
 def generate_pair_indices(rdm):
     """Generates row_indices, col_indices for all unique pairs (i,j) where i < j,
@@ -181,8 +184,8 @@ def get_balanced_pairs_list(rdm, n_extremes=50):
         sorted_order = np.argsort(values)
         sorted_indices = valid_indices[sorted_order]
 
-        mid_mask = (values >= 0.85) & (
-            values <= 1.15
+        mid_mask = (values >= MID_VALUE_MIN) & (
+            values <= MID_VALUE_MAX
         )  # Peak around 1.0, Curtomise value range until getting even distribution
         mid_indices = sorted_indices[mid_mask]
 
@@ -290,7 +293,23 @@ def get_train_and_test_pairs(train_indices, test_indices, shuffled_indices):
 
 # Data class for SVM
 class PairedData:
+    """A dataset class that holds embeddings and their associated pairing indices.
+
+    Each data point is constructed by concatenating a pair of embeddings.
+
+    Attributes:
+        embeddings (np.ndarray): An array of embeddings.
+        pair_indices (list of tuple): A list of index pairs indicating which embeddings to pair.
+    """
+
     def __init__(self, embeddings, pair_indices):
+        """Initialize the PairedData instance.
+
+        Args:
+            embeddings (np.ndarray): An array containing the embeddings.
+            pair_indices (list of tuple): A list where each tuple contains two indices
+                                          that specify a pair of embeddings.
+        """
         self.embeddings = embeddings
         self.pair_indices = pair_indices
 
@@ -301,15 +320,32 @@ class PairedData:
         idx1, idx2 = self.pair_indices[idx]
         emb1 = self.embeddings[idx1]
         emb2 = self.embeddings[idx2]
-        # Concatenate the embeddings if needed by the SVM
         return np.concatenate([emb1, emb2])
 
 
-# New Contrastive Learning Pair Dataset Class
 class PairedDataset(Dataset):
+    """A PyTorch Dataset for contrastive learning
+
+    Provides pairs of embeddings and corresponding labels.
+    The embeddings and labels are converted to PyTorch tensors for model consumption.
+
+    Attributes:
+        paired_embeddings (torch.Tensor): Tensor of embeddings.
+        paired_indices (list of tuple): A list of index pairs specifying which embeddings to pair.
+        labels (torch.Tensor): Tensor of labels corresponding to each pair.
+    """
+
     def __init__(self, paired_embeddings, paired_indices, labels):
+        """Initialize the PairedDataset instance.
+
+        Args:
+            paired_embeddings (array-like): The embeddings to be paired.
+            paired_indices (list of tuple): A list of tuples, where each tuple contains two indices
+                                            specifying which embeddings to pair.
+            labels (array-like): The labels for each pair.
+        """
         self.paired_embeddings = tensor(paired_embeddings, dtype=float32)
-        self.paired_indices = paired_indices  # Store the paired indices
+        self.paired_indices = paired_indices
         self.labels = tensor(labels, dtype=float32)
 
     def __len__(self):

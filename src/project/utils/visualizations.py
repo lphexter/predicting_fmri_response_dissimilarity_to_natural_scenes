@@ -8,7 +8,7 @@ from ..config import clip_config
 from ..logger import logger
 
 
-def plot_rdm_submatrix(rdm, subset_size=100, binary=False):
+def plot_rdm_submatrix(rdm, subset_size=100, binary=False):  # noqa: FBT002
     """Plots a subset of the Representational Dissimilarity Matrix (RDM).
 
     Args:
@@ -27,7 +27,7 @@ def plot_rdm_submatrix(rdm, subset_size=100, binary=False):
             cmap=cmap,
             annot=False,
             square=True,
-            cbar_kws={"ticks": [0.25, 0.75], "format": lambda x, pos: {0.25: "similar", 0.75: "dissimilar"}.get(x, "")},
+            cbar_kws={"ticks": [0.25, 0.75], "format": lambda x, _: {0.25: "similar", 0.75: "dissimilar"}.get(x, "")},
         )
     else:
         sns.heatmap(subset_rdm, cmap="viridis", annot=False, square=True)
@@ -222,8 +222,21 @@ def plot_rdms(true_rdm, predicted_rdm):
     plt.show()
 
 
-# Display for SVM
 def plot_confusion_matrix_and_metrics(y_true, y_pred, distribution_type="all"):
+    """Plot the confusion matrix and evaluation metrics for an SVM classifier.
+
+    Calculates accuracy, precision, recall, and F1 score using the provided true and predicted labels.
+    Displays a heatmap of the confusion matrix with a textbox showing the computed metrics.
+
+    Args:
+        y_true (array-like): True class labels.
+        y_pred (array-like): Predicted class labels.
+        distribution_type (str, optional): Description of the data distribution. Defaults to "all".
+
+    Returns:
+        None
+    """
+
     def calculate_metrics(y_true, y_pred):
         return (
             accuracy_score(y_true, y_pred),
@@ -232,13 +245,8 @@ def plot_confusion_matrix_and_metrics(y_true, y_pred, distribution_type="all"):
             f1_score(y_true, y_pred, pos_label="dissimilar"),
         )
 
-    # Calculate metrics
     accuracy, precision, recall, f1 = calculate_metrics(y_true, y_pred)
-
-    # Compute confusion matrix
     cm = confusion_matrix(y_true, y_pred)
-
-    # Create figure and heatmap
     plt.figure(figsize=(8, 6))
     ax = sns.heatmap(
         cm,
@@ -251,70 +259,72 @@ def plot_confusion_matrix_and_metrics(y_true, y_pred, distribution_type="all"):
     plt.xlabel("Predicted")
     plt.ylabel("True")
     ax.collections[0].set_clim(vmin=0)
-
-    # Create a metrics string
     metrics_text = f"Accuracy: {accuracy:.3f}\nPrecision: {precision:.3f}\nRecall: {recall:.3f}\nF1 Score: {f1:.3f}"
-
-    # Add the metrics text as a textbox in the figure.
-    plt.gcf().text(0.9, 0.5, metrics_text, fontsize=12, bbox=dict(facecolor="white", edgecolor="black", alpha=0.8))
-
+    plt.gcf().text(0.9, 0.5, metrics_text, fontsize=12, bbox={"facecolor": "white", "edgecolor": "black", "alpha": 0.8})
     plt.title(f"{distribution_type.title()} Pairs: Confusion Matrix and Metrics")
     plt.show()
 
 
-#########################################
-#    IMAGE COLOR CLASSIFICATION
-#########################################
-
-
 def print_image_counts(labels):
-    """Count and display image labels(0=Blue,1=Red,2=Green,-1=Unclassified)"""
+    """Count and display the number of images for each label.
+
+    Labels are interpreted as follows:
+      - 0: Blue
+      - 1: Red
+      - 2: Green
+      - -1: Unclassified
+
+    Args:
+        labels (array-like): Array of image labels.
+
+    Returns:
+        None
+    """
+    LABEL_TO_COLOR = {v: k for k, v in clip_config.COLOR_TO_LABEL.items()}
     unique, counts = np.unique(labels, return_counts=True)
     label_count_map = dict(zip(unique, counts, strict=False))
     logger.info("Image count by label:")
     for lbl, cnt in label_count_map.items():
-        if lbl == 0:
-            logger.info(f"Blue (0): {cnt} images")
-        elif lbl == 1:
-            logger.info(f"Red (1): {cnt} images")
-        elif lbl == 2:
-            logger.info(f"Green (2): {cnt} images")
-        elif lbl == -1:
-            logger.info(f"Unclassified (-1): {cnt} images")
+        logger.info(f"{LABEL_TO_COLOR.get(lbl, 'Unknown')} ({lbl}): {cnt} images")
 
 
 def display_images_by_label(images, labels, label_to_show=0, num_images=10):
-    """Displays up to 'num_images' images for a specific numeric label: 0=Blue, 1=Red, 2=Green, -1=Unclassified.
+    """Display a subset of images corresponding to a specific label.
 
-    :param images: List of images (NumPy arrays).
-    :param labels: The array of labels returned by classify_images_rgb.
-    :param label_to_show: Numeric label (0,1,2 or -1).
-    :param num_images: Number of images to display.
+    Args:
+        images (list of np.ndarray): List of images.
+        labels (array-like): Array of image labels.
+        label_to_show (int, optional): Label of images to display (0, 1, 2, or -1). Defaults to 0.
+        num_images (int, optional): Maximum number of images to display. Defaults to 10.
+
+    Returns:
+        None
     """
-    # Find all indices of images matching label_to_show
     indices = [i for i, lbl in enumerate(labels) if lbl == label_to_show]
     logger.info(f"\nDisplaying up to {num_images} images for label {label_to_show} (found {len(indices)})")
-
     sample_indices = indices[:num_images]
     plt.figure(figsize=(15, 5))
     for i, img_idx in enumerate(sample_indices):
         plt.subplot(1, num_images, i + 1)
-        # Our images were converted to RGB in the classification step,
-        # so we can display them directly
         plt.imshow(images[img_idx])
         plt.axis("off")
     plt.show()
 
 
-#########################################
-#    K FOLD CONTRASTIVE LEARNING
-#########################################
-
-
 def plot_fold_results(true_train, pred_train, true_test, pred_test, epoch):
-    """Creates two scatter plots (one for training and one for test) in one figure."""
-    fig, axes = plt.subplots(1, 2, figsize=(12, 6))
+    """Create scatter plots comparing true and predicted distances for training and test sets.
 
+    Args:
+        true_train (array-like): True distances for the training set.
+        pred_train (array-like): Predicted distances for the training set.
+        true_test (array-like): True distances for the test set.
+        pred_test (array-like): Predicted distances for the test set.
+        epoch (int): Epoch number (zero-indexed) used for titling the plots.
+
+    Returns:
+        None
+    """
+    fig, axes = plt.subplots(1, 2, figsize=(12, 6))
     overall_min_train = min(np.min(true_train), np.min(pred_train))
     overall_max_train = max(np.max(true_train), np.max(pred_train))
     overall_min_test = min(np.min(true_test), np.min(pred_test))
@@ -339,11 +349,25 @@ def plot_fold_results(true_train, pred_train, true_test, pred_test, epoch):
 
 
 def plot_cv_summary(folds, fold_loss_list, fold_r2_list, chance_mse, shuffled_chance_mse):
-    """Plots summary figures for loss and R^2 across folds."""
+    """Plot a summary of k-fold cross-validation performance for loss and R².
+
+    Displays two plots:
+      - Loss vs. Folds: Includes target loss, baseline (predicting the mean), and shuffled chance loss.
+      - R² vs. Folds: Includes target R², baseline, and chance R² from shuffling.
+
+    Args:
+        folds (array-like): Array of fold indices.
+        fold_loss_list (list): List of loss values for each fold.
+        fold_r2_list (list): List of R² scores for each fold.
+        chance_mse (float): Mean squared error when predicting the mean.
+        shuffled_chance_mse (float): Mean squared error for shuffled predictions.
+
+    Returns:
+        None
+    """
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
     fig.suptitle(f"{clip_config.DISTRIBUTION_TYPE.title()}: K-Fold Cross-Validation Summary", fontsize=16)
 
-    # Plot Loss vs. Folds.
     ax1.axhline(y=0, color="green", linestyle="--", label="Target Loss")
     ax1.axhline(y=chance_mse, color="purple", linestyle="--", label="Predicting the mean")
     ax1.axhline(y=shuffled_chance_mse, color="red", linestyle="--", label="Chance (Shuffling values)")
@@ -354,7 +378,6 @@ def plot_cv_summary(folds, fold_loss_list, fold_r2_list, chance_mse, shuffled_ch
     ax1.set_xticks(folds)
     ax1.legend(bbox_to_anchor=(0.5, -0.15), loc="upper center")
 
-    # Plot R^2 vs. Folds.
     ax2.axhline(y=1, color="green", linestyle="--", label="Target R^2")
     ax2.axhline(y=0, color="purple", linestyle="--", label="Predicting the mean")
     ax2.axhline(y=-1, color="red", linestyle="--", label="Chance (Shuffling values)")
