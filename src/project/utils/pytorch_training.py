@@ -363,6 +363,7 @@ def run_svm(embeddings, rdm, binary_rdm):
     random.shuffle(shuffled_indices)
 
     train_indices, test_indices = train_test_split(np.arange(rdm.shape[0]), test_size=0.36, random_state=42)
+    logger.info(f"Size of train indices: {train_indices.shape}, size of test indices: {test_indices.shape}")
 
     train_pairs, test_pairs = get_train_and_test_pairs(train_indices, test_indices, shuffled_indices)
     X_train, y_train_binary, _ = make_pairs(binary_rdm, rdm, train_pairs)
@@ -372,6 +373,7 @@ def run_svm(embeddings, rdm, binary_rdm):
     paired_data_test = PairedData(embeddings, X_test)
 
     clf = train_or_load_svm(paired_data_train, y_train_binary)
+    logger.info(f"Preparing to predict test data using clf: {clf}")
     y_test_pred = clf.predict(paired_data_test)
     plot_confusion_matrix_and_metrics(y_test_binary, y_test_pred, distribution_type=clip_config.DISTRIBUTION_TYPE)
 
@@ -402,17 +404,20 @@ def train_or_load_svm(
         ValueError: If y_train does not contain at least two unique classes when training a new model.
     """
     if model_to_load != "":
+        logger.info(f"Preparing to load model from path: {model_to_load}")
         try:
             clf = joblib.load(model_to_load)
         except Exception as e:
             raise RuntimeError(f"Failed to load model from {model_to_load}: {e}") from e
     else:
+        logger.info("Training SVM from scratch")
         unique_classes = set(y_train)
         if len(unique_classes) < 2:  # noqa: PLR2004
             raise ValueError("Training failed: y_train must have at least two unique classes.")
         clf = SVC(degree=clip_config.DEGREE, kernel=clip_config.KERNEL)
         clf.fit(X_train, y_train)
         if save_model_file_name != "":
+            logger.info(f"Preparing to save model to path: {save_model_file_name}")
             try:
                 joblib.dump(clf, save_model_file_name)
             except Exception as e:

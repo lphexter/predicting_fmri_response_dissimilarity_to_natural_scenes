@@ -129,9 +129,9 @@ def main():
     #   TRAINING    STAGE <3>
     #######################
 
-    run_svm(fmri_data, rdm, binary_rdm)
+    run_svm(embeddings, rdm, binary_rdm)
 
-    run_kfold_cv(fmri_data, binary_rdm, rdm, device)
+    run_kfold_cv(embeddings, binary_rdm, rdm, device)
 
 
 if __name__ == "__main__":
