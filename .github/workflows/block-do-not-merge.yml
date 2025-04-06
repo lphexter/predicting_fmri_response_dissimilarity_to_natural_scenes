@@ -1,0 +1,21 @@
+name: Block PRs with "do not merge" label
+
+on:
+  pull_request:
+    types: [labeled, unlabeled, opened, edited, synchronize]
+
+jobs:
+  block-do-not-merge:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check for "do not merge" label
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const labels = context.payload.pull_request.labels.map(label => label.name.toLowerCase());
+            if (labels.includes("do not merge")) {
+              core.setFailed('PR is blocked from merging because it has the "do not merge" label.');
+            } else {
+              console.log("No blocking labels found. You're good to go!");
+            }
