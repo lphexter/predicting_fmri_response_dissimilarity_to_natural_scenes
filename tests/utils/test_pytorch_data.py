@@ -1,13 +1,160 @@
 import numpy as np
+import pytest
 import torch
 
 from project.utils.pytorch_data import (
     PairDataset,
+    PairedData,
+    PairedDataset,
     dep_train_test_split_pairs,
     generate_pair_indices,
+    get_balanced_pairs_list,
+    get_extreme_pairs_list,
+    get_train_and_test_pairs,
+    get_valid_pair_indices,
+    make_pairs,
     prepare_data_for_kfold,
     train_test_split_pairs,
 )
+
+#########################################
+# Tests for new pair/index helper functions
+#########################################
+
+
+def test_get_extreme_pairs_list():
+    """Test get_extreme_pairs_list with a small 3x3 RDM and n_extremes=1."""
+    rdm = np.array([[0, 1, 2], [1, 0, 3], [2, 3, 0]])
+    pairs = get_extreme_pairs_list(rdm, n_extremes=1)
+    # For each image, expect two pairs: one with the lowest and one with the highest value.
+    # For image 0: valid indices [1,2] → expected pairs (0,1) and (0,2)
+    # For image 1: valid indices [0,2] → expected pairs (1,0) and (1,2)
+    # For image 2: valid indices [0,1] → expected pairs (2,0) and (2,1)
+    expected = [(0, 1), (0, 2), (1, 0), (1, 2), (2, 0), (2, 1)]
+    assert sorted(pairs) == sorted(expected), f"Expected {expected}, got {pairs}"
+
+
+def test_get_balanced_pairs_list():
+    """Test get_balanced_pairs_list with an RDM that provides sufficient mid-range values.
+
+    Constructs an RDM for 5 images where all off-diagonals are 1.0 (which lies within the mid-range [0.85, 1.15]).
+    Then, verifies that each returned pair is within valid indices and that at least one pair is returned.
+    """
+    n_images = 5
+    # Create an RDM where all off-diagonals are 1.0 (mid-range) and the diagonal is 0.
+    rdm = np.ones((n_images, n_images))
+    np.fill_diagonal(rdm, 0)
+
+    # n_extremes is 1, so the mid-range sampling will attempt to sample int(1 // 0.3)=3 elements.
+    pairs = get_balanced_pairs_list(rdm, n_extremes=1)
+
+    for i, j in pairs:
+        assert 0 <= i < n_images, f"Pair index i={i} out of bounds."
+        assert 0 <= j < n_images, f"Pair index j={j} out of bounds."
+    assert len(pairs) > 0, "No pairs returned from get_balanced_pairs_list."
+
+
+def test_get_valid_pair_indices_all():
+    """Test get_valid_pair_indices with distribution_type 'all' returns all unique pairs."""
+    n = 4
+    # Create a dummy symmetric RDM (values don't matter here).
+    rdm = np.zeros((n, n))
+    valid_pairs = get_valid_pair_indices(rdm, distribution_type="all")
+    # Expected all unique pairs (i,j) for i < j
+    expected = [(i, j) for i in range(n) for j in range(i + 1, n)]
+    assert sorted(valid_pairs) == sorted(expected)
+
+
+def test_get_valid_pair_indices_extremes():
+    """Test get_valid_pair_indices with distribution_type 'extremes' returns the same as get_extreme_pairs_list."""
+    rdm = np.array([[0, 1, 2], [1, 0, 3], [2, 3, 0]])
+    valid_pairs = get_valid_pair_indices(rdm, distribution_type="extremes")
+    expected = get_extreme_pairs_list(rdm)  # default n_extremes=50, but our small RDM is fine
+    assert sorted(valid_pairs) == sorted(expected)
+
+
+def test_get_valid_pair_indices_balanced_euclidean():
+    """Test that get_valid_pair_indices with distribution_type 'balanced' and euclidean metric raises ValueError."""
+    rdm = np.eye(4)
+    with pytest.raises(ValueError):  # noqa: PT011
+        get_valid_pair_indices(rdm, metric="euclidean", distribution_type="balanced")
+
+
+def test_make_pairs():
+    """Test make_pairs returns arrays with expected shapes and values."""
+    # Create a dummy RDM (binary and numeric) for 4 images.
+    rdm_binary = np.array([[0, 1, 0, 1], [1, 0, 1, 0], [0, 1, 0, 1], [1, 0, 1, 0]])
+    rdm_numeric = np.array([[0, 0.2, 0.3, 0.4], [0.2, 0, 0.5, 0.6], [0.3, 0.5, 0, 0.7], [0.4, 0.6, 0.7, 0]])
+    # Define indices as list of pairs.
+    indices = [(0, 1), (2, 3)]
+    X_data, y_binary, y_numeric = make_pairs(rdm_binary, rdm_numeric, indices)
+    # Expect X_data shape (2,2), y_binary shape (2,), y_numeric shape (2,)
+    assert X_data.shape == (2, 2)
+    assert y_binary.shape == (2,)
+    assert y_numeric.shape == (2,)
+    # Verify values
+    np.testing.assert_array_equal(X_data, np.array([[0, 1], [2, 3]]))
+    np.testing.assert_array_equal(y_binary, np.array([1, 1]))
+    np.testing.assert_array_equal(y_numeric, np.array([0.2, 0.7]))
+
+
+def test_get_train_and_test_pairs():
+    """Test get_train_and_test_pairs separates pairs based on provided train/test image indices."""
+    # Suppose we have 5 images.
+    train_indices = [0, 1, 2]
+    test_indices = [3, 4]
+    # Shuffled indices: list of pairs (as tuples)
+    shuffled_indices = [(0, 1), (0, 3), (1, 2), (3, 4), (2, 4)]
+    train_pairs, test_pairs = get_train_and_test_pairs(train_indices, test_indices, shuffled_indices)
+    # Expected: train pairs are those with both indices in {0,1,2} and test pairs with both in {3,4}.
+    expected_train = [(0, 1), (1, 2)]
+    expected_test = [(3, 4)]
+    assert sorted(train_pairs) == sorted(expected_train)
+    assert sorted(test_pairs) == sorted(expected_test)
+
+
+#########################################
+# Tests for new Dataset classes
+#########################################
+
+
+def test_paired_data():
+    """Test the PairedData class to verify correct concatenation of embeddings."""
+    # Create dummy embeddings: 5 images, each with 4 features.
+    embeddings = np.arange(20).reshape(5, 4)
+    pair_indices = [(0, 1), (2, 3)]
+    dataset = PairedData(embeddings, pair_indices)
+    # Length should equal number of pairs.
+    assert len(dataset) == 2
+    # Test first item: expect concatenation of embeddings[0] and embeddings[1]
+    item = dataset[0]
+    expected = np.concatenate([embeddings[0], embeddings[1]])
+    np.testing.assert_array_equal(item, expected)
+
+
+def test_paired_dataset():
+    """Test the PairedDataset class to verify proper tensor conversion and pair retrieval."""
+    # Create dummy embeddings: 5 images, each with 3 features.
+    embeddings = np.arange(15).reshape(5, 3).astype(np.float32)
+    pair_indices = [(0, 2), (1, 3)]
+    labels = np.array([0.5, 0.8], dtype=np.float32)
+    dataset = PairedDataset(embeddings, pair_indices, labels)
+    # Check length.
+    assert len(dataset) == 2
+    # Get first item.
+    emb1, emb2, label = dataset[0]
+    # Expected: emb1 = embeddings[0], emb2 = embeddings[2]
+    expected_emb1 = torch.tensor(embeddings[0])
+    expected_emb2 = torch.tensor(embeddings[2])
+    torch.testing.assert_allclose(emb1, expected_emb1)
+    torch.testing.assert_allclose(emb2, expected_emb2)
+    # Label should match.
+    torch.testing.assert_allclose(label, torch.tensor(0.5, dtype=torch.float32))
+
+
+#########################################
+# Tests for old pytorch data functions
+#########################################
 
 
 def test_generate_pair_indices():

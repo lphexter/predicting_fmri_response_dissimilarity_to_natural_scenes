@@ -1,9 +1,69 @@
 import torch
+import torch.nn.functional as F  # noqa: N812
 
 from project.models import pytorch_models
 
 ###################
-# NOTE: Only testing properties of DynamicLayerSizeNeuralNetwork as it's the final model Class we use in our experiments
+# Testing properties of ContrastiveNetwork
+###################
+
+
+def test_contrastive_forward_shape():
+    """Test that ContrastiveNetwork produces an output of shape (batch_size, 1).
+
+    Creates two random input tensors and checks that the concatenated output
+    from the network has the expected shape.
+    """
+    batch_size = 4
+    input_dim = 10
+    model = pytorch_models.ContrastiveNetwork(input_dim)
+    emb1 = torch.randn(batch_size, input_dim)
+    emb2 = torch.randn(batch_size, input_dim)
+    output = model(emb1, emb2)
+    assert output.shape == (batch_size, 1), f"Expected output shape {(batch_size, 1)}, got {output.shape}"
+
+
+def test_contrastive_loss_computation():
+    """Test that the contrastive_loss function computes the expected mean squared error.
+
+    Generates random embeddings and a target similarity, computes the loss using the
+    contrastive_loss function, and compares it with the expected loss computed using F.mse_loss.
+    """
+    batch_size = 4
+    input_dim = 10
+    model = pytorch_models.ContrastiveNetwork(input_dim)
+    emb1 = torch.randn(batch_size, input_dim)
+    emb2 = torch.randn(batch_size, input_dim)
+    true_similarity = torch.randn(batch_size)  # Expected shape: (batch_size,)
+
+    similarity_score, loss = pytorch_models.contrastive_loss(model, emb1, emb2, true_similarity)
+    expected_loss = F.mse_loss(similarity_score, true_similarity)
+    assert torch.allclose(loss, expected_loss), "Loss computed does not match expected MSE loss."
+
+
+def test_contrastive_loss_backward():
+    """Test that gradients can be computed through the contrastive_loss function.
+
+    Runs a forward pass, computes the loss, and then performs a backward pass
+    to ensure that gradients are successfully propagated.
+    """
+    batch_size = 4
+    input_dim = 10
+    model = pytorch_models.ContrastiveNetwork(input_dim)
+    emb1 = torch.randn(batch_size, input_dim)
+    emb2 = torch.randn(batch_size, input_dim)
+    true_similarity = torch.randn(batch_size)
+
+    similarity_score, loss = pytorch_models.contrastive_loss(model, emb1, emb2, true_similarity)
+    loss.backward()  # This should run without error
+
+    # Optionally, check that gradients are not None for a parameter in the model.
+    grad_found = any(param.grad is not None for param in model.parameters())
+    assert grad_found, "Gradients were not computed during the backward pass."
+
+
+###################
+# Testing properties of DynamicLayerSizeNeuralNetwork
 ###################
 
 

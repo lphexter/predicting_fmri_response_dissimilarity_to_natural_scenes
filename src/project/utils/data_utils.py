@@ -12,6 +12,10 @@ from ..config import clip_config
 from ..logger import logger
 from ..utils.visualizations import show_image_pair
 
+#    CONSTANTS FOR COLOR CLASSIFICATION
+COLOR_MAP = {"Blue": np.array([0, 0, 255]), "Red": np.array([255, 0, 0]), "Green": np.array([0, 255, 0])}
+
+
 #########################################
 #    fMRI DATA LOADING & ROI HANDLING
 #########################################
@@ -291,13 +295,40 @@ def create_rdm(roi_data, metric="correlation"):
     return rdm
 
 
+def create_binary_rdm(rdm, metric="correlation"):
+    """Creates a binary RDM from a continuous RDM based on the specified metric.
+
+    For 'correlation', values < 1 are considered similar and values >= 1 are dissimilar.
+    For 'euclidean', a threshold is calculated from the data (here, the median of the
+    non-zero values is used to roughly split the data into two equal groups).
+
+    Args:
+        rdm: A NumPy array representing the continuous RDM.
+        metric: A string indicating which metric to use ('correlation' or 'euclidean').
+
+    Returns:
+        A binary RDM (NumPy array) with entries labeled as 'similar' or 'dissimilar'.
+    """
+    if metric == "correlation":
+        threshold = 1
+    elif metric == "euclidean":
+        # Exclude zero values (which often correspond to self-similarity)
+        valid_values = rdm[rdm > 0]
+        if valid_values.size == 0:
+            raise ValueError("No non-zero values found in the RDM to compute a threshold.")
+        threshold = np.median(valid_values)
+    else:
+        raise ValueError("Unsupported metric. Please use 'correlation' or 'euclidean'.")
+
+    return np.where(rdm > threshold, "dissimilar", "similar")
+
+
 #############################################
-#     DATA PREP FUNCTIONS FOR DEPRECATED MODEL
+#     IMAGE PROCESSING AND CLASSIFICATION
 #############################################
 
 
-# Image preprocessing
-def preprocess_images(image_dir, num_images, new_width, new_height):
+def preprocess_images(image_dir, num_images, new_width, new_height, grayscale=True):  # noqa: FBT002
     """Loads, resizes, and normalizes images from a directory.
 
     Args:
@@ -305,6 +336,7 @@ def preprocess_images(image_dir, num_images, new_width, new_height):
         num_images (int): Number of images to process.
         new_width (int): Width to resize images to.
         new_height (int): Height to resize images to.
+        grayscale (boolean): Convert images to grayscale, default to True.
 
     Returns:
         np.ndarray: Normalized image data.
@@ -319,11 +351,167 @@ def preprocess_images(image_dir, num_images, new_width, new_height):
 
     for image_file in tqdm(image_files[:num_images], desc="Resizing images"):
         image_path = os.path.join(image_dir, image_file)
-        img = Image.open(image_path).convert("L")
+        img = Image.open(image_path)
+        if grayscale:
+            img = img.convert("L")
         img = img.resize((new_width, new_height))
         image_data.append(np.array(img, dtype=np.float32))
 
     return min_max_norm(image_data)
+
+
+def closest_color(pixel, color_map):
+    """Return color classification or None if ambiguous.
+
+    Given a pixel (R, G, B) and a dictionary of named colors (RGB),
+    returns the name of the color that is closest in Euclidean distance.
+    If there is a tie (i.e. more than one color is equally close),
+    returns None to indicate ambiguity.
+
+    Args:
+        pixel (np.ndarray): An array representing the pixel's RGB values.
+        color_map (dict): A dictionary mapping color names to their RGB values.
+
+    Returns:
+        str or None: The name of the closest color, or None if there's a tie.
+    """
+    distances = {}
+    for color_name, color_rgb in color_map.items():
+        dist = np.linalg.norm(pixel - color_rgb)
+        distances[color_name] = dist
+
+    min_distance = min(distances.values())
+    winners = [color for color, d in distances.items() if d == min_distance]
+
+    if len(winners) > 1:
+        return None
+    return winners[0]
+
+
+def classify_images_rgb(images, threshold=0.7):
+    """Classifies a list of images (NumPy arrays) to either Blue(0), Red(1), or Green(2), or Unclassified (-1)
+
+    Based on the majority of pixels that are closest to each color definition.
+    If the fraction of the dominant color is below 'threshold', the image is assigned -1 (unclassified).
+
+    :param images: list of (H, W, 3) NumPy arrays (BGR or RGB).
+    :param threshold: float, the minimum fraction of pixels required to classify
+                      the image as a specific color.
+    :return: A NumPy array (or list) of length len(images), where each index i
+             contains 0,1,2 according to the dominant color (Blue/Red/Green),
+             or -1 if the image is unclassified.
+    """
+    # Prepare an array for labels, initialized to -1 (meaning "unclassified")
+    labels = np.full(len(images), -1, dtype=int)
+
+    for idx, img in enumerate(images):
+        # Convert to float for distance calculations, reshape to (N, 3) because (R, G, B)
+        pixels = img.reshape(-1, 3).astype(np.float32)
+        total_pixels = len(pixels)
+
+        # Count how many pixels are closest to each color
+        color_counts = {"Blue": 0, "Red": 0, "Green": 0}
+
+        for pixel in pixels:
+            color_name = closest_color(pixel, COLOR_MAP)
+            if color_name is not None:
+                color_counts[color_name] += 1
+
+        # Find which color is the majority for this image
+        dominant_color = max(color_counts, key=color_counts.get)
+        dominant_count = color_counts[dominant_color]
+
+        # Calculate the fraction of pixels for the dominant color
+        fraction_dominant = dominant_count / total_pixels
+
+        if fraction_dominant >= threshold:
+            labels[idx] = clip_config.COLOR_TO_LABEL[dominant_color]
+        else:
+            labels[idx] = -1
+
+    return labels
+
+
+def load_color_map_files(color_map_files, root_data_dir):
+    """Loads and concatenates color map files with pre-validation to minimize per-iteration try/except overhead.
+
+    Args:
+        color_map_files (str): Comma-separated file paths for np.load.
+        root_data_dir (str): Directory path of all color mask files.
+
+    Returns:
+        np.ndarray: Concatenated color maps.
+
+    Raises:
+        FileNotFoundError: If any file does not exist.
+        ValueError: If the loaded color maps cannot be concatenated.
+        Exception: For any other unexpected errors during file loading or concatenation.
+    """
+    # Build full file paths and validate existence upfront.
+    file_list = [os.path.join(root_data_dir, f.strip()) for f in color_map_files.split(",")]
+    missing_files = [file for file in file_list if not os.path.isfile(file)]  # noqa: PTH113
+    if missing_files:
+        raise FileNotFoundError(f"The following files were not found: {missing_files}")
+
+    try:
+        # Load all color maps.
+        color_maps = [np.load(file) for file in file_list]
+        # Concatenate the loaded color maps.
+        return np.concatenate(color_maps, axis=0)
+    except ValueError as e:
+        raise ValueError(f"Error concatenating color maps: {e}") from e
+    except Exception as e:
+        raise Exception(f"Unexpected error loading files: {e}") from e  # noqa: TRY002
+
+
+def get_equal_color_data(embeddings, roi_data, color_mask_list, desired_colors):
+    """Given two color classes, return embeddings and raw data cut to an equal amount per class.
+
+    Given input embeddings, ROI data, a comma-separated string of color map file paths,
+    and a tuple of two desired colors (e.g. ('R', 'G') or ('B', 'R')),
+    this function:
+      - Loads and concatenates the color maps.
+      - Finds indices corresponding to each desired color.
+      - Trims each set of indices to the same (minimum) length.
+      - Selects the corresponding embeddings and ROI data.
+      - Returns the concatenated embeddings and ROI data.
+
+    Args:
+        embeddings (np.ndarray): Array of shape (n_samples, feature_dim)
+        roi_data (np.ndarray): Array of shape (n_samples, roi_feature_dim)
+        color_mask_list(str): Comma-separated file paths for np.load.
+        desired_colors (tuple): Tuple of two color labels (e.g. ('R', 'G')).
+
+    Returns:
+        combined_embeddings (np.ndarray): Array of shape (2*N, feature_dim)
+        combined_roi_data (np.ndarray): ROI data concatenated vertically (shape (2*N, roi_feature_dim))
+    """
+    # R = 1, B = 0, G = 2; convert tuple to integers based on map
+    desired_colors = [1 if color == "R" else 0 if color == "B" else 2 for color in desired_colors]
+
+    # Extract indices for each desired color
+    color1, color2 = desired_colors
+    indices1 = np.where((color_mask_list == color1) & (np.arange(len(color_mask_list)) < embeddings.shape[0]))[0]
+    indices2 = np.where((color_mask_list == color2) & (np.arange(len(color_mask_list)) < embeddings.shape[0]))[0]
+
+    # Determine the minimum count to equalize the groups
+    min_count = min(len(indices1), len(indices2))
+    indices1 = indices1[:min_count]
+    indices2 = indices2[:min_count]
+    combined_indices = np.concatenate((indices1, indices2), axis=0)
+
+    # Select embeddings corresponding to each color
+    combined_embeddings = embeddings[combined_indices, :]
+
+    # Select ROI data corresponding to each color
+    combined_roi_data = roi_data[combined_indices, :]
+
+    return combined_roi_data, combined_embeddings
+
+
+#############################################
+#     DATA PREP FUNCTIONS FOR DEPRECATED MODEL
+#############################################
 
 
 def prepare_data_for_cnn(rdm, test_size=0.2):

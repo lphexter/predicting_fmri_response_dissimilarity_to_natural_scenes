@@ -1,5 +1,7 @@
 # Predicting fMRI Response Dissimilarity to Natural Scenes
-COURSE: Data Science and Advanced Python Concepts Workshop for Neuroscience
+**COURSES:**
+1. Machine Learning and Neural Networks for Neuroscience
+2. Data Science and Advanced Python Concepts Workshop for Neuroscience
 
 BAR-ILAN UNIVERSITY
 
@@ -14,9 +16,11 @@ Moreover, the similarity between brain responses and Machine Learning (ML) model
 
 Based on these assumptions we hypothesized that our novel approach could yield successful results: **to build an ML model capable of predicting how dissimilarly a given brain region in the visual cortex will process two different images.**
 
-Two different ML model architectures were explored, the first consists of a **simple 2-Layer Siamese CNN,** which did not succeed to get encouraging results. The second one consists of a **Multi-Layer Perceptron model** that takes two concatenated embeddings as input, corresponding to each pair of images, which are obtained using a pretrained model.
+A few different ML model architectures were explored, the first consists of a **simple 2-Layer Siamese CNN,** which did not succeed to get encouraging results. The second one consists of a **Multi-Layer Perceptron model** that takes two concatenated embeddings as input, corresponding to each pair of images, which are obtained using a pretrained model. Our third model is a simple SVM for binary classificaiton of our data (similar vs. dissimilar), and our fourth model is a Contrastive Siamese Network (both third and fourth models are represented in our most up-to-date `main.py` file).
 
-**PDF report file:** This repository contains a PDF file with the project report, where the project background, design and methodology are carefully detailed. It follows the structure of a scientific report with the following parts: introduction, methodology, results, and conclusion and discussion. As specified in the guidelines, no citations or references are included.
+**PDF report files:**
+1. Machine learning (<INSERT_NAME>):<INSERT DESCRIPTION> 
+2. Python ("[Python Report] Predicting fMRI Response Dissimilarity to Natural Scenes.pdf"): The project background, design and methodology are carefully detailed, up until the approximately mid February. It follows the structure of a scientific report with the following parts: introduction, methodology, results, and conclusion and discussion. As specified in the guidelines, no citations or references are included.
 
 ### Project structure
 Full dataset results are run via various Google Colab workbooks (impossible to run with the full dataset on a local machine), but this repository has all corresponding code split out into organized files (per `Directory structure` detailed below).
@@ -46,6 +50,7 @@ predicting_fmri_response_dissimilarity_to_natural_scenes/
   │   │   │   └── visualizations.py
   │   │   ├── __init__.py
   │   │   ├── dep_main.py
+  │   │   ├── dep2_main.py
   │   │   ├── logger.py
   │   │   └── main.py
 ```
@@ -53,30 +58,30 @@ predicting_fmri_response_dissimilarity_to_natural_scenes/
 
 As shown in the directory structure, our project contains three package-like folders for configuration, ML models, and different utilities to use the pretrained model, to preprocess our fMRI data, to prepare our data for the ML model using pytorch, to train our model, and to visualize the results. Additionally, the logger.py file is used for logging, while main.py serves as the main entry point of the project. There are also certain functions which we used for testing, but are not called in main.py as they are not part of the core analysis.
 
-**"dep_main.py", "dep_models.py", and "dep_config.py" are deprecated code and left simply for storage/tracking purposes (NOTE: they are not up-to-date with coding standards)**.
+**"dep2_main.py", "dep_main.py", "dep_models.py", and "dep_config.py" are deprecated code and left simply for storage/tracking purposes (NOTE: they are not up-to-date with coding standards)**.
 
 Outside of the source/project/ we have the TOML file which defines the project metadata, dependencies, and tool configurations; the Tox file which automates running linting and tests; and the test files which contain unit tests to validate the project's functionality.
 
 **About the test files:** tests were excluded for any deprecated code, visualizations.py, and main.py (unit tests already cover functions called in main.py). Additionally, magic number checking was excluded in test files.
 
 ### Configuration files: important explanations
-1. [DEPRECATED] dep_config.py --> user configurations for the first/deprecated model
-2. clip_config.py --> user configurations for the second model. In this file, several configurations can be updated: for user/experimental parameters (e.g., subject, data directory, ROIs, ROI classes, desired image number), for the CLIP model (pretrained model to use, path to file), and for the RDM/training parameters (e.g., metric to calculate dissimilarity, accuracy metric, activation function, number of epochs, learning rate, batch size, test size, number of hidden layers, use K fold cross validation or not).
-   NOTE: "SWEEP" to True means that you will loop over the layers in "LAYERS_LIST" after it finishes running with the parameterized layer number, HIDDEN_LAYERS
-
-    a. [**RECOMMENDED**] Update `LOAD_EMBEDDINGS_FILE` in `clip_config.py` with the proper Shortcut path such that you can use the pre-run embeddings, rather than loading from scratch. If using Windows ensure that the path uses backslashes instead of forwardslashes. If using THINGSvision features, replace `LOAD_EMBEDDINGS_FILE` with the path to the THINGSvision features instead. (NOT RECOMMENDED - Otherwise, update `LOAD_EMBEDDINGS_FILE` TO `""`.)
+1. [DEPRECATED] **dep_config.py** --> user configurations for the first/deprecated model
+2. **clip_config.py** --> user configurations for the second and third models. In this file, several configurations can be updated: for user/experimental parameters (e.g., subject, data directory, ROIs, ROI classes, desired image number), for the CLIP model (pretrained model to use, path to file), and for the RDM/training parameters, some of which are shared across the second and third models (dissimilarity metric, number of epochs, learning rate, batch size, test size, and number of folds in k-fold cross-validation). Others which are unique to either model:
+    1. **Second Model (Simple MLP)**: RDM/training parameters which are unique to this model are the accuracy metric, activation function, number of hidden layers, and whether to use K fold cross validation. Additionally, "SWEEP" to True means the code will loop over the layers in "LAYERS_LIST" after running with the parameterized layer number, HIDDEN_LAYERS.
+    2. **Third / Fourth Models** (SVM, Constrastive Siamese Network - most updated `main.py` file):
+         1. Distribution type is introduced as a data preprocessing parameter (all = no filtering of images, balanced = balanced distribution of extreme and mid-range values according to the dissimilarity metric, extremes = distribution of only extreme values according to the dissimilarity metric, colors = filtering images based on dominant color either Red, Blue, or Green). With the color option, we also introduced some more parameters: target height and width for resizing images, the color pair comparison of interest (two of Red, Blue, and Green), and an optional string containing a list of color mask files (if color masks are preloaded and saved, making it much more efficient than continually re-running image processing each trial).
+         2. We also added one more hyperparameter in the Contrastive Model to tune the percentage of dropout layers, as well as a few parameters for SVM training (kernel, degree, and optional save and load paths for the model).
+    4. [**RECOMMENDED**] Update `LOAD_EMBEDDINGS_FILE` in `clip_config.py` with the proper Shortcut path such that you can use the pre-run embeddings, rather than loading from scratch. If using Windows ensure that the path uses backslashes instead of forwardslashes. If using THINGSvision features, replace `LOAD_EMBEDDINGS_FILE` with the path to the THINGSvision features instead. (NOT RECOMMENDED - Otherwise, update `LOAD_EMBEDDINGS_FILE` TO `""`.)
 
 ### Key stages
 In our main file we have three main key stages:
 
-STAGE <1> --> **Loading the fMRI data (labels of the model).** FMRI data is loaded for the ROIs selected in the configuration file, and left and right hemispheres are concatenated.
-The Representational Dissimilarity Matrix (RDM) is built according to the dissimilarity metric chosen in the configuration files (1 - Pearson correlation or Euclidean distance).
-
-As a final part of this stage, the first results are calculated and plotted: the pairs of images with the smallest and largest RDM values. These results aim only to understand our dataset and our labels better, and to visualize what do we demand from our ML model.
-
-STAGE <2> --> **Loading the CLIP-ViT embeddings.** Embeddings of the pretrained model are either loaded (we have them saved) or calculated from scratch (in case more/different images are wanted). These saved embeddings can be either the normal CLIP-ViT embeddings (corresponding to the last layer of the model), or the embeddings obtained using the THINGSvision python toolbox to extract specifically the visual layers of the CLIP-ViT model. This is specified in the configuration file as well.
-
-STAGE <3> --> **Training and evaluation of the model.** Data is split into train and test sets, the model is trained, evaluated with the test set, and plotted. Depending on parameters specified in the configuration file, the model will run only for a specified number of hidden layers or for a list of hidden layers, as explained in the above section.
+1. STAGE <1> **Loading the fMRI data (labels of the model).** FMRI data is loaded for the ROIs selected in the configuration file, and left and right hemispheres are concatenated.
+    1. The Representational Dissimilarity Matrix (RDM) is built according to the dissimilarity metric chosen in the configuration files (1 - Pearson correlation or Euclidean distance).
+    2. As a final part of this stage, the first results are calculated and plotted: the pairs of images with the smallest and largest RDM values. These results aim only to understand our dataset and our labels better, and to visualize what do we demand from our ML model.
+2. STAGE <2> **Loading the CLIP-ViT embeddings.** Embeddings of the pretrained model are either loaded (we have them saved) or calculated from scratch (in case more/different images are wanted). These saved embeddings can be either the normal CLIP-ViT embeddings (corresponding to the last layer of the model), or the embeddings obtained using the THINGSvision python toolbox to extract specifically the visual layers of the CLIP-ViT model. This is specified in the configuration file as well.
+3. STAGE <3> **Training and evaluation of the model.** Data is split into train and test sets, the model is trained, evaluated with the test set, and plotted. In the most updated main.py file, we train/evaluate both the SVM model for binary classification as well as the Contrastive Siamese Network to predict the actual RDM values.
+    1. [Only relevant for Second Model, the MLP] Depending on parameters specified in the configuration file, the model will run only for a specified number of hidden layers or for a list of hidden layers, as explained in the above section.
 
 ## Data description
 In this study, we utilized the Natural Scenes Dataset, which contains high-resolution fMRI data collected from eight participants as they viewed 10,000 natural scene images. Each image was presented  aproximately three times, and the fMRI responses were averaged across repetitions. (Link provided in References.)
@@ -119,7 +124,13 @@ pip install -e .[dev]
 python3.10 -m src.project.dep_main --root_dir "/absolute/path/to/Google/Drive/Shortcut"
 ```
 
-#### Second model (simple MLP)
+#### [NEWLY DEPRECATED] Second model (simple MLP)
+```bash 
+python3.10 -m src.project.dep2_main --root_dir "/absolute/path/to/Google/Drive/Shortcut"
+```
+##### Note - to use THINGSvision features, update the above command for the second model with the optional flag `--thingsvision`
+
+#### Third/Fourth models (SVM, Contrastive Siamese Network)
 ```bash 
 python3.10 -m src.project.main --root_dir "/absolute/path/to/Google/Drive/Shortcut"
 ```

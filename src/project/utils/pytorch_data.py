@@ -1,9 +1,13 @@
 import numpy as np
 import torch
 from sklearn.model_selection import KFold, train_test_split
+from torch import float32, tensor
 from torch.utils.data import DataLoader, Dataset
 
 from ..config import clip_config
+
+MID_VALUE_MIN = 0.85
+MID_VALUE_MAX = 1.15
 
 
 def generate_pair_indices(rdm):
@@ -143,6 +147,219 @@ def prepare_data_for_kfold(row_indices, col_indices, rdm_values, loaded_features
     return loaders
 
 
+#########################################
+#    DATA HELPER METHODS - NEWER MODELS
+#########################################
+
+
+def get_balanced_pairs_list(rdm, n_extremes=50):
+    """Get a balanced distribution across the data.
+
+    Returns a list of pairs (i, j) where j includes extreme pairs
+    (lowest/highest) plus mid-range values centered around 1.0.
+
+    Parameters:
+        rdm (np.ndarray): 2D representational dissimilarity matrix.
+        n_extremes (int): Number of lowest and highest pairs to select per image.
+
+    Returns:
+        List[Tuple[int, int]]: List of tuples representing image index pairs.
+    """
+    n_images = rdm.shape[0]
+    pairs_list = []
+
+    # Get extreme pairs using the existing function
+    extreme_pairs_list = get_extreme_pairs_list(rdm, n_extremes)
+    # Create a dictionary to store extreme pairs for each image
+    extreme_pairs_dict = {}
+    for i, j in extreme_pairs_list:
+        extreme_pairs_dict.setdefault(i, []).append(j)
+
+    for i in range(n_images):
+        extreme_pairs = extreme_pairs_dict.get(i, [])
+
+        # Find mid-range values (centered around 1.0)
+        valid_indices = np.delete(np.arange(n_images), i)  # Exclude self-comparison
+        values = rdm[i, valid_indices]
+        sorted_order = np.argsort(values)
+        sorted_indices = valid_indices[sorted_order]
+
+        mid_mask = (values >= MID_VALUE_MIN) & (
+            values <= MID_VALUE_MAX
+        )  # Peak around 1.0, Curtomise value range until getting even distribution
+        mid_indices = sorted_indices[mid_mask]
+
+        if len(mid_indices) > n_extremes:
+            mid_indices = np.random.choice(
+                mid_indices, int(n_extremes // 0.3), replace=False
+            )  # Customise //number until getting even distribution
+
+        # Combine extreme and mid-range pairs
+        combined = np.concatenate([extreme_pairs, mid_indices])
+
+        # Append tuple pairs for this image
+        for j in combined:
+            pairs_list.append((int(i), int(j)))  # noqa: PERF401
+
+    return pairs_list
+
+
+def get_extreme_pairs_list(rdm, n_extremes=50):
+    """Get a distribution of only extreme values in the data.
+
+    Returns a list of pairs (i, j) where j is one of the most extreme pairs (lowest/highest)
+    for image i, without applying any lower or upper bound.
+
+    Parameters:
+        rdm (np.ndarray): 2D representational dissimilarity matrix.
+        n_extremes (int): Number of lowest and highest pairs to select per image.
+
+    Returns:
+        List[Tuple[int, int]]: List of tuples representing image index pairs.
+    """
+    n_images = rdm.shape[0]
+    pairs_list = []
+
+    for i in range(n_images):
+        # Exclude self-comparison
+        valid_indices = np.delete(np.arange(n_images), i)  # All indices except i
+
+        values = rdm[i, valid_indices]
+        sorted_order = np.argsort(values)  # Sort in increasing order
+        sorted_indices = valid_indices[sorted_order]
+
+        # Select n_extremes lowest and highest, ensuring we don't exceed available data
+        low_indices = sorted_indices[:n_extremes]
+        high_indices = sorted_indices[-n_extremes:] if len(sorted_indices) >= n_extremes else sorted_indices
+
+        combined = np.concatenate([low_indices, high_indices])
+
+        # Append tuple pairs for this image
+        for j in combined:
+            pairs_list.append((int(i), int(j)))  # noqa: PERF401
+
+    return pairs_list
+
+
+def get_valid_pair_indices(rdm, metric="correlation", distribution_type="all"):
+    # default - return all pairs of indices
+    n_images = rdm.shape[0]
+    if distribution_type in ("all", "colors"):
+        valid_pair_indices = [(i, j) for i, j in zip(*np.triu_indices(n_images, k=1), strict=False)]
+    elif distribution_type == "extremes":
+        valid_pair_indices = get_extreme_pairs_list(rdm)
+    elif distribution_type == "balanced":
+        if metric == "euclidean":
+            raise ValueError("Can't use balanced distribution for euclidean metric")
+        valid_pair_indices = get_balanced_pairs_list(rdm)
+    else:
+        raise ValueError("Invalid distribution type")
+
+    return valid_pair_indices
+
+
+def make_pairs(rdm_binary, rdm_numeric, indices):
+    """Build pairwise data from a precomputed list of pairs.
+
+    Args:
+        rdm_binary (np.ndarray): shape (N, N), binary similarity/dissimilarity matrix.
+        rdm_numeric (np.ndarray): shape (N, N), numeric dissimilarity matrix.
+        indices (list): Either a list of integers or a list of tuple pairs.
+
+    Returns:
+        X_pairs (np.ndarray): shape (num_pairs, 1024), indices of embeddings for each pair.
+        y_pairs (np.ndarray): shape (num_pairs,), binary labels.
+        y_numeric_pairs (np.ndarray): shape (num_pairs,), numeric dissimilarity values.
+    """
+    pair_indices = np.array(indices)  # Convert to NumPy array for indexing
+    X_data = np.stack((pair_indices[:, 0], pair_indices[:, 1]), axis=-1)  # Store pair indices instead of embeddings
+    y_binary = rdm_binary[pair_indices[:, 0], pair_indices[:, 1]]
+    y_numeric = rdm_numeric[pair_indices[:, 0], pair_indices[:, 1]]
+
+    return X_data, y_binary, y_numeric
+
+
+def get_train_and_test_pairs(train_indices, test_indices, shuffled_indices):
+    # Convert to sets for membership testing.
+    train_img_set = set(train_indices)
+    test_img_set = set(test_indices)
+
+    # Filter pairs so that only pairs with both images in the train (or test) set are used.
+    train_pairs = [pair for pair in shuffled_indices if pair[0] in train_img_set and pair[1] in train_img_set]
+    test_pairs = [pair for pair in shuffled_indices if pair[0] in test_img_set and pair[1] in test_img_set]
+
+    return train_pairs, test_pairs
+
+
+# Data class for SVM
+class PairedData:
+    """A dataset class that holds embeddings and their associated pairing indices.
+
+    Each data point is constructed by concatenating a pair of embeddings.
+
+    Attributes:
+        embeddings (np.ndarray): An array of embeddings.
+        pair_indices (list of tuple): A list of index pairs indicating which embeddings to pair.
+    """
+
+    def __init__(self, embeddings, pair_indices):
+        """Initialize the PairedData instance.
+
+        Args:
+            embeddings (np.ndarray): An array containing the embeddings.
+            pair_indices (list of tuple): A list where each tuple contains two indices
+                                          that specify a pair of embeddings.
+        """
+        self.embeddings = embeddings
+        self.pair_indices = pair_indices
+
+    def __len__(self):
+        return len(self.pair_indices)
+
+    def __getitem__(self, idx):
+        idx1, idx2 = self.pair_indices[idx]
+        emb1 = self.embeddings[idx1]
+        emb2 = self.embeddings[idx2]
+        return np.concatenate([emb1, emb2])
+
+
+class PairedDataset(Dataset):
+    """A PyTorch Dataset for contrastive learning
+
+    Provides pairs of embeddings and corresponding labels.
+    The embeddings and labels are converted to PyTorch tensors for model consumption.
+
+    Attributes:
+        paired_embeddings (torch.Tensor): Tensor of embeddings.
+        paired_indices (list of tuple): A list of index pairs specifying which embeddings to pair.
+        labels (torch.Tensor): Tensor of labels corresponding to each pair.
+    """
+
+    def __init__(self, paired_embeddings, paired_indices, labels):
+        """Initialize the PairedDataset instance.
+
+        Args:
+            paired_embeddings (array-like): The embeddings to be paired.
+            paired_indices (list of tuple): A list of tuples, where each tuple contains two indices
+                                            specifying which embeddings to pair.
+            labels (array-like): The labels for each pair.
+        """
+        self.paired_embeddings = tensor(paired_embeddings, dtype=float32)
+        self.paired_indices = paired_indices
+        self.labels = tensor(labels, dtype=float32)
+
+    def __len__(self):
+        return len(self.paired_indices)
+
+    def __getitem__(self, idx):
+        idx1, idx2 = self.paired_indices[idx]
+        emb1 = self.paired_embeddings[idx1]
+        emb2 = self.paired_embeddings[idx2]
+        label = self.labels[idx]
+        return emb1, emb2, label
+
+
+# Old MLP Pair Dataset Class
 class PairDataset(Dataset):
     """A PyTorch dataset for handling paired embeddings.
 
