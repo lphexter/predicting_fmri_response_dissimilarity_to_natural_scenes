@@ -7,8 +7,6 @@ BAR-ILAN UNIVERSITY
 
 ## Project Documentation
 ### Project Description
-This project did not aim to replicate or directly compare results from existing papers. Instead, we adopted an **exploratory approach** to a novel task in an existing problem space.
-
 The goal of this project is to predict how different our brain response will be to viewing a pair of images representing natural scenes, i.e., **predict dissimilarity between fMRI responses to pairs of images.**
 
 Based on the literature we assume that it is possible to predict a stimulus given an fMRI response (decoding), or vice versa, predicting the fMRI response given a stimulus (encoding).
@@ -18,11 +16,8 @@ Based on these assumptions we hypothesized that our novel approach could yield s
 
 A few different ML model architectures were explored, the first consists of a **simple 2-Layer Siamese CNN,** which did not succeed to get encouraging results (now deprecated). The second one consists of a **Multi-Layer Perceptron model** that takes two concatenated embeddings as input, corresponding to each pair of images, which are obtained using a pretrained model, which also did not yield good results (also deprecated). Our third model is a simple **SVM** for binary classificaiton of our data (similar vs. dissimilar), and our fourth model is a **Contrastive Siamese Network** (both third and fourth models are represented in our most up-to-date `main.py` file and this [Google Colab](https://colab.research.google.com/drive/1ZXQ6ZcRh0BVFiXxHQ_-fqcGrTaB2mAlc) - details on running these below).
 
-**PDF report files:**
-1. Machine learning ("A machine learning approach to predict
-brain response dissimilarity to pairs of
-visual stimuli"): This report builds on top of our first results as detailed in the Python report, focusing on results form the third and fourth models.
-2. Python ("[Python Report] Predicting fMRI Response Dissimilarity to Natural Scenes.pdf"): The project background, design and methodology are carefully detailed, up until the approximately mid February. It follows the structure of a scientific report with the following parts: introduction, methodology, results, and conclusion and discussion. As specified in the guidelines, no citations or references are included.
+**PDF report file:**
+"A machine learning approach to predict brain response dissimilarity to pairs of visual stimuli"
 
 ### Project structure
 Full dataset results are run via various Google Colab workbooks (impossible to run with the full dataset on a local machine), but this repository has all corresponding code split out into organized files (per `Directory structure` detailed below).
@@ -68,7 +63,7 @@ Outside of the source/project/ we have the TOML file which defines the project m
 
 ### Configuration files: important explanations
 1. [DEPRECATED] **dep_config.py** --> user configurations for the first/deprecated model
-2. **clip_config.py** --> user configurations for the second and third models. In this file, several configurations can be updated: for user/experimental parameters (e.g., subject, data directory, ROIs, ROI classes, desired image number), for the CLIP model (pretrained model to use, path to file), and for the RDM/training parameters, some of which are shared across the second and third models (dissimilarity metric, number of epochs, learning rate, batch size, test size, and number of folds in k-fold cross-validation). Others which are unique to either model:
+2. **clip_config.py** --> user configurations for the second, third and fourth models. In this file, several configurations can be updated: for user/experimental parameters (e.g., subject, data directory, ROIs, ROI classes, desired image number), for the CLIP model (pretrained model to use, path to file), and for the RDM/training parameters, some of which are shared across the second and third models (dissimilarity metric, number of epochs, learning rate, batch size, test size, and number of folds in k-fold cross-validation). Others which are unique to either model:
     1. **Second Model (Simple MLP)**: RDM/training parameters which are unique to this model are the accuracy metric, activation function, number of hidden layers, and whether to use K fold cross validation. Additionally, "SWEEP" to True means the code will loop over the layers in "LAYERS_LIST" after running with the parameterized layer number, HIDDEN_LAYERS.
     2. **Third / Fourth Models** (SVM, Constrastive Siamese Network - most updated `main.py` file):
          1. Distribution type is introduced as a data preprocessing parameter (all = no filtering of images, balanced = balanced distribution of extreme and mid-range values according to the dissimilarity metric, extremes = distribution of only extreme values according to the dissimilarity metric, colors = filtering images based on dominant color either Red, Blue, or Green). With the color option, we also introduced some more parameters: target height and width for resizing images, the color pair comparison of interest (two of Red, Blue, and Green), and an optional string containing a list of color mask files (if color masks are preloaded and saved, making it much more efficient than continually re-running image processing each trial).
