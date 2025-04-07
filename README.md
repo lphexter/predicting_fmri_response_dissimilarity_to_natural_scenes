@@ -60,7 +60,7 @@ predicting_fmri_response_dissimilarity_to_natural_scenes/
 
 As shown in the directory structure, our project contains three package-like folders for configuration, ML models, and different utilities to use the pretrained model, to preprocess our fMRI data, to prepare our data for the ML model using pytorch, to train our model, and to visualize the results. Additionally, the logger.py file is used for logging, while main.py serves as the main entry point of the project. There are also certain functions which we used for testing, but are not called in main.py as they are not part of the core analysis.
 
-**"dep2_main.py", "dep_main.py", "dep_models.py", and "dep_config.py" are deprecated code and left simply for storage/tracking purposes (NOTE: they are not up-to-date with coding standards)**.
+**`dep2_main.py`, `dep_main.py`, `dep_models.py`, and `dep_config.py` are deprecated code and left simply for storage/tracking purposes (NOTE: all besides `dep2_main.py` are not up-to-date with coding standards)**.
 
 Outside of the source/project/ we have the TOML file which defines the project metadata, dependencies, and tool configurations; the Tox file which automates running linting and tests; and the test files which contain unit tests to validate the project's functionality.
 
