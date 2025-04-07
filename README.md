@@ -137,7 +137,7 @@ python3.10 -m src.project.dep2_main --root_dir "/absolute/path/to/Google/Drive/S
 python3.10 -m src.project.main --root_dir "/absolute/path/to/Google/Drive/Shortcut"
 ```
 ##### Note - to use THINGSvision features, update the above command for the second model with the optional flag `--thingsvision`
-##### [RECOMMENDED] Additionally, rather than running locally with main.py, it can be run with this [Google Colab notebook](https://colab.research.google.com/drive/1ZXQ6ZcRh0BVFiXxHQ_-fqcGrTaB2mAlc) (which imports relevant functions from GitHub and allows the user to update configurations live, while using Colab resources rather than local). You may request access as needed (it is under the same testing data folder `mini_data_for_python`).
+##### [RECOMMENDED] Additionally, rather than running locally with main.py, it can be run with this [Google Colab notebook](https://colab.research.google.com/drive/1ZXQ6ZcRh0BVFiXxHQ_-fqcGrTaB2mAlc) (which imports relevant functions from GitHub and allows the user to update configurations live, while using Colab resources rather than local). You may request access as needed (it is under the same testing data folder [mini_data_for_python](https://drive.google.com/drive/folders/19mXhFsOlFWu2vyPkj5In2VQS-Buu4K48)).
 
 ### Modify package dependencies (add/remove/update external modules/packages):
 #### Add new module:
