@@ -130,11 +130,11 @@ python3.10 -m src.project.dep_main --root_dir "/absolute/path/to/Google/Drive/Sh
 ```bash 
 python3.10 -m src.project.dep2_main --root_dir "/absolute/path/to/Google/Drive/Shortcut"
 ```
-##### Note - to use THINGSvision features, update the above command for the second model with the optional flag `--thingsvision`
+###### Note - to use THINGSvision features, update the above command for the second model with the optional flag `--thingsvision`
 
 #### Third/Fourth models (SVM, Contrastive Siamese Network)
 
-#### Running locally
+##### Running locally
 ```bash 
 python3.10 -m src.project.main --root_dir "/absolute/path/to/Google/Drive/Shortcut"
 ```
