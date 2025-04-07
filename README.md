@@ -16,10 +16,12 @@ Moreover, the similarity between brain responses and Machine Learning (ML) model
 
 Based on these assumptions we hypothesized that our novel approach could yield successful results: **to build an ML model capable of predicting how dissimilarly a given brain region in the visual cortex will process two different images.**
 
-A few different ML model architectures were explored, the first consists of a **simple 2-Layer Siamese CNN,** which did not succeed to get encouraging results. The second one consists of a **Multi-Layer Perceptron model** that takes two concatenated embeddings as input, corresponding to each pair of images, which are obtained using a pretrained model. Our third model is a simple SVM for binary classificaiton of our data (similar vs. dissimilar), and our fourth model is a Contrastive Siamese Network (both third and fourth models are represented in our most up-to-date `main.py` file).
+A few different ML model architectures were explored, the first consists of a **simple 2-Layer Siamese CNN,** which did not succeed to get encouraging results (now deprecated). The second one consists of a **Multi-Layer Perceptron model** that takes two concatenated embeddings as input, corresponding to each pair of images, which are obtained using a pretrained model, which also did not yield good results (also deprecated). Our third model is a simple **SVM** for binary classificaiton of our data (similar vs. dissimilar), and our fourth model is a **Contrastive Siamese Network** (both third and fourth models are represented in our most up-to-date `main.py` file and this [Google Colab](https://colab.research.google.com/drive/1ZXQ6ZcRh0BVFiXxHQ_-fqcGrTaB2mAlc) - details on running these below).
 
 **PDF report files:**
-1. Machine learning (<INSERT_NAME>):<INSERT DESCRIPTION> 
+1. Machine learning ("A machine learning approach to predict
+brain response dissimilarity to pairs of
+visual stimuli"): This report builds on top of our first results as detailed in the Python report, focusing on results form the third and fourth models.
 2. Python ("[Python Report] Predicting fMRI Response Dissimilarity to Natural Scenes.pdf"): The project background, design and methodology are carefully detailed, up until the approximately mid February. It follows the structure of a scientific report with the following parts: introduction, methodology, results, and conclusion and discussion. As specified in the guidelines, no citations or references are included.
 
 ### Project structure
@@ -58,7 +60,7 @@ predicting_fmri_response_dissimilarity_to_natural_scenes/
 
 As shown in the directory structure, our project contains three package-like folders for configuration, ML models, and different utilities to use the pretrained model, to preprocess our fMRI data, to prepare our data for the ML model using pytorch, to train our model, and to visualize the results. Additionally, the logger.py file is used for logging, while main.py serves as the main entry point of the project. There are also certain functions which we used for testing, but are not called in main.py as they are not part of the core analysis.
 
-**"dep2_main.py", "dep_main.py", "dep_models.py", and "dep_config.py" are deprecated code and left simply for storage/tracking purposes (NOTE: they are not up-to-date with coding standards)**.
+**`dep2_main.py`, `dep_main.py`, `dep_models.py`, and `dep_config.py` are deprecated code and left simply for storage/tracking purposes (NOTE: all besides `dep2_main.py` are not up-to-date with coding standards)**.
 
 Outside of the source/project/ we have the TOML file which defines the project metadata, dependencies, and tool configurations; the Tox file which automates running linting and tests; and the test files which contain unit tests to validate the project's functionality.
 
@@ -128,13 +130,18 @@ python3.10 -m src.project.dep_main --root_dir "/absolute/path/to/Google/Drive/Sh
 ```bash 
 python3.10 -m src.project.dep2_main --root_dir "/absolute/path/to/Google/Drive/Shortcut"
 ```
-##### Note - to use THINGSvision features, update the above command for the second model with the optional flag `--thingsvision`
+###### Note - to use THINGSvision features, update the above command for the second model with the optional flag `--thingsvision`
 
 #### Third/Fourth models (SVM, Contrastive Siamese Network)
+
+##### Running locally
 ```bash 
 python3.10 -m src.project.main --root_dir "/absolute/path/to/Google/Drive/Shortcut"
 ```
-##### Note - to use THINGSvision features, update the above command for the second model with the optional flag `--thingsvision`
+###### Note - to use THINGSvision features, update the above command for the second model with the optional flag `--thingsvision`
+
+##### Running in Google Colab
+Additionally, rather than running locally with `main.py`, it can be run with this [Google Colab notebook](https://colab.research.google.com/drive/1ZXQ6ZcRh0BVFiXxHQ_-fqcGrTaB2mAlc) (which imports relevant functions from GitHub and allows the user to update configurations live, while using Colab resources rather than local). You may request access as needed (it is under the same testing data folder [mini_data_for_python](https://drive.google.com/drive/folders/19mXhFsOlFWu2vyPkj5In2VQS-Buu4K48)).
 
 ### Modify package dependencies (add/remove/update external modules/packages):
 #### Add new module:
