@@ -1,7 +1,5 @@
 # Predicting fMRI Response Dissimilarity to Natural Scenes
-**COURSES:**
-1. Machine Learning and Neural Networks for Neuroscience
-2. Data Science and Advanced Python Concepts Workshop for Neuroscience
+**COURSE:** Machine Learning and Neural Networks for Neuroscience
 
 BAR-ILAN UNIVERSITY
 
