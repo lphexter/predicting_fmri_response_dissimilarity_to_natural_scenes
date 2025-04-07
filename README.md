@@ -19,7 +19,9 @@ Based on these assumptions we hypothesized that our novel approach could yield s
 A few different ML model architectures were explored, the first consists of a **simple 2-Layer Siamese CNN,** which did not succeed to get encouraging results. The second one consists of a **Multi-Layer Perceptron model** that takes two concatenated embeddings as input, corresponding to each pair of images, which are obtained using a pretrained model. Our third model is a simple SVM for binary classificaiton of our data (similar vs. dissimilar), and our fourth model is a Contrastive Siamese Network (both third and fourth models are represented in our most up-to-date `main.py` file).
 
 **PDF report files:**
-1. Machine learning (<INSERT_NAME>):<INSERT DESCRIPTION> 
+1. Machine learning ("A machine learning approach to predict
+brain response dissimilarity to pairs of
+visual stimuli"): This report builds on top of our first results as detailed in the Python report, focusing on results form the third and fourth models.
 2. Python ("[Python Report] Predicting fMRI Response Dissimilarity to Natural Scenes.pdf"): The project background, design and methodology are carefully detailed, up until the approximately mid February. It follows the structure of a scientific report with the following parts: introduction, methodology, results, and conclusion and discussion. As specified in the guidelines, no citations or references are included.
 
 ### Project structure
@@ -135,6 +137,7 @@ python3.10 -m src.project.dep2_main --root_dir "/absolute/path/to/Google/Drive/S
 python3.10 -m src.project.main --root_dir "/absolute/path/to/Google/Drive/Shortcut"
 ```
 ##### Note - to use THINGSvision features, update the above command for the second model with the optional flag `--thingsvision`
+##### [RECOMMENDED] Additionally, rather than running locally with main.py, it can be run with this [Google Colab notebook](https://colab.research.google.com/drive/1ZXQ6ZcRh0BVFiXxHQ_-fqcGrTaB2mAlc) (which imports relevant functions from GitHub and allows the user to update configurations live, while using Colab resources rather than local). You may request access as needed (it is under the same testing data folder `mini_data_for_python`).
 
 ### Modify package dependencies (add/remove/update external modules/packages):
 #### Add new module:
